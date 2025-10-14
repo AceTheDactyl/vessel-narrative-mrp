@@ -111,3 +111,11 @@ GitHub Remote
   - Create remote with GitHub CLI: `gh repo create vessel-narrative-mrp --public --source=. --remote=origin --push`
   - Or set an existing remote: `git remote add origin <url> && git push -u origin main`
 
+
+Submodule: Echo-Community-Toolkit
+- This repo includes Echo-Community-Toolkit as a git submodule at `Echo-Community-Toolkit/`.
+- Clone with submodules: `git clone --recurse-submodules <repo-url>`
+- Or initialize after clone:
+  - `git submodule update --init --recursive`
+- Update the toolkit to latest main:
+  - `(cd Echo-Community-Toolkit && git checkout main && git pull --ff-only)`

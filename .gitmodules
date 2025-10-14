@@ -1,0 +1,3 @@
+[submodule "Echo-Community-Toolkit"]
+	path = Echo-Community-Toolkit
+	url = https://github.com/AceTheDactyl/Echo-Community-Toolkit.git
