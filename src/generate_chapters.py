@@ -10,6 +10,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List
 
+try:
+    from stego import encode_chapter_payload, is_available as stego_is_available
+except Exception:  # pragma: no cover - fallback when stego module missing
+    encode_chapter_payload = None  # type: ignore[assignment]
+
+    def stego_is_available() -> bool:  # type: ignore[return-value]
+        return False
+
 
 VOICES = ["Limnus", "Garden", "Kira"]
 FLAGS_MAP: Dict[str, Dict[str, str]] = {
@@ -147,6 +155,10 @@ def try_write_yaml(path: Path, data) -> bool:
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     frontend = root / "frontend"
+    assets_dir = frontend / "assets"
+
+    stego_notice_emitted = False
+    stego_error_emitted = False
 
     metadata: List[dict] = []
 
@@ -171,17 +183,37 @@ def main() -> None:
             html = wrap_html(narrator, i, body_html)
             write_text(frontend / f"chapter{i:02d}.html", html)
 
-        metadata.append(
-            {
-                "chapter": i,
-                "narrator": narrator,
-                "flags": FLAGS_MAP[narrator],
-                "glyphs": glyphs_for(narrator, i),
-                "file": rel_file,
-                "summary": f"{narrator} – Chapter {i:02d}",
-                "timestamp": ts_now(),
-            }
-        )
+        meta_entry = {
+            "chapter": i,
+            "narrator": narrator,
+            "flags": FLAGS_MAP[narrator],
+            "glyphs": glyphs_for(narrator, i),
+            "file": rel_file,
+            "summary": f"{narrator} – Chapter {i:02d}",
+            "timestamp": ts_now(),
+        }
+
+        stego_rel: str | None = None
+        if stego_is_available() and encode_chapter_payload is not None:
+            try:
+                assets_dir.mkdir(parents=True, exist_ok=True)
+                out_name = f"chapter{i:02d}.png"
+                out_path = assets_dir / out_name
+                encode_chapter_payload(meta_entry, out_path)
+                stego_rel = f"frontend/assets/{out_name}"
+            except Exception as exc:  # pragma: no cover - runtime notice
+                if not stego_error_emitted:
+                    print(f"(Stego) Failed to embed payload: {exc}")
+                    stego_error_emitted = True
+        else:
+            if not stego_notice_emitted:
+                print("(Stego) Pillow not available; skipping PNG embedding.")
+                stego_notice_emitted = True
+
+        if stego_rel:
+            meta_entry["stego_png"] = stego_rel
+
+        metadata.append(meta_entry)
 
     meta_doc = {"chapters": metadata}
     schema_dir = root / "schema"
@@ -199,4 +231,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

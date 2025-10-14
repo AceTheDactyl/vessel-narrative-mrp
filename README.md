@@ -14,7 +14,7 @@ Project Structure
 Quick Start
 1) Python 3.8+ recommended. Optionally install PyYAML if you want YAML outputs.
    - `python -m venv .venv && source .venv/bin/activate`
-   - `pip install PyYAML` (optional)
+   - `pip install PyYAML Pillow` (optional stego/YAML support)
 
 2) Build schema and generate chapters/metadata
    - `python src/schema_builder.py`
@@ -34,12 +34,14 @@ Generation Notes
 - Chapters 2–20 are generated via templates with placeholders: `{{chapter_number}}`, `{{narrator}}`, `{{body}}`, `{{flags}}`, `{{glyphs_line}}`.
 - Rotation ensures no voice appears twice in a row; each voice appears 6–7 times.
 - Flags: narrator’s channel is `active`; others are `latent`. Every chapter ends with a `[Flags: ...]` marker.
+- When Pillow is available, each metadata entry includes `stego_png` pointing to `frontend/assets/chapterXX.png`, containing the embedded payload (chapter, narrator, flags, glyphs, file, summary, timestamp).
 
 Validation Checks
 - Schema presence and simple type checks against `schema/narrative_schema.json`.
 - Structural rules: 20 chapters, rotation, counts.
 - Files exist for all metadata entries.
 - Flag consistency: metadata flags match `[Flags: ...]` in each HTML.
+- Stego payloads (when generated) decode from `frontend/assets/*.png` and match the metadata.
 
 Customization
 - Update templates in `markdown_templates/` to change voice tone and glyphs.
@@ -84,11 +86,12 @@ Recommended Workflow
   - Script skips integrate/verify when Node < 20; upgrade Node to run those stages.
 
 Steganography: Practical Notes
-- Start simple: 1‑bit per color channel, RGBA PNGs. Reserve a header with a
-  magic marker (e.g., `VMRP\x00`) + version + payload length before storing a
-  compact CBOR/JSON with chapter, flags, glyph IDs.
-- Cross‑check: the validator can decode PNG payloads and compare with
-  `schema/chapters_metadata.json` for consistency.
+- Implemented via `src/stego.py` using 1-bit LSB embedding with a `VMRP\x00`
+  header, version byte, and payload length. Enable by installing Pillow.
+- Generated files live under `frontend/assets/` and are referenced by the
+  `stego_png` field in metadata.
+- Validator decodes the PNG payloads and verifies they match metadata; failures
+  indicate drift or tampering.
 
 Living Chronicles: Local Sources
 - Use these local files for style, glyph motifs, and narrative seeds:

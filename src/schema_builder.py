@@ -39,6 +39,7 @@ def build_schema() -> dict:
             "file": {"type": "string"},
             "summary": {"type": "string"},
             "timestamp": {"type": "string", "format": "date-time"},
+            "stego_png": {"type": "string"},
         },
     }
 
@@ -97,4 +98,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

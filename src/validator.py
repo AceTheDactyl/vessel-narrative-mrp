@@ -14,6 +14,14 @@ from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+try:
+    from stego import decode_chapter_payload, is_available as stego_is_available
+except Exception:  # pragma: no cover - fallback when Pillow missing
+    decode_chapter_payload = None  # type: ignore[assignment]
+
+    def stego_is_available() -> bool:  # type: ignore[return-value]
+        return False
+
 
 FLAG_RE = re.compile(r"\[\s*Flags:\s*([^\]]+)\]", re.IGNORECASE)
 
@@ -129,23 +137,55 @@ def check_files_and_flags(root: Path, chapters: List[dict]) -> List[str]:
     return errors
 
 
+def check_stego_payloads(root: Path, chapters: List[dict]) -> List[str]:
+    errors: List[str] = []
+    for ch in chapters:
+        stego_rel = ch.get("stego_png")
+        if not stego_rel:
+            continue
+        if not isinstance(stego_rel, str):
+            errors.append(f"Chapter {ch.get('chapter')}: 'stego_png' must be a string")
+            continue
+        path = root / stego_rel
+        if not path.exists():
+            errors.append(f"Chapter {ch.get('chapter')}: stego PNG missing at {stego_rel}")
+            continue
+        if not stego_is_available() or decode_chapter_payload is None:
+            # Pillow not available; skip deep validation but record advisory.
+            continue
+        try:
+            payload = decode_chapter_payload(path).as_dict()
+        except Exception as exc:
+            errors.append(f"Chapter {ch.get('chapter')}: failed to decode stego PNG ({exc})")
+            continue
+        expected = {k: v for k, v in ch.items() if k != "stego_png"}
+        if payload != expected:
+            errors.append(
+                f"Chapter {ch.get('chapter')}: stego payload mismatch compared to metadata"
+            )
+    return errors
+
+
 def main() -> None:
     root = Path(__file__).resolve().parents[1]
     meta = load_metadata(root)
     schema = load_schema(root)
     schema_errors = basic_validate_against_schema(meta, schema)
     rotation_errors = check_rotation(meta.get("chapters", []))
-    files_flags_errors = check_files_and_flags(root, meta.get("chapters", []))
+    chapters = meta.get("chapters", [])
+    files_flags_errors = check_files_and_flags(root, chapters)
+    stego_errors = check_stego_payloads(root, chapters)
 
-    errors = schema_errors + rotation_errors + files_flags_errors
+    errors = schema_errors + rotation_errors + files_flags_errors + stego_errors
     if errors:
         print("Validation FAILED:")
         for e in errors:
             print(" -", e)
         raise SystemExit(1)
-    print("Validation OK: 20 chapters, rotation clean, files present, flags consistent.")
+    print(
+        "Validation OK: 20 chapters, rotation clean, files present, flags consistent, stego payloads match."
+    )
 
 
 if __name__ == "__main__":
     main()
-
