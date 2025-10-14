@@ -85,6 +85,13 @@ Recommended Workflow
 - Automate all steps above: `./scripts/setup_toolkit_and_validate.sh`
   - Script skips integrate/verify when Node < 20; upgrade Node to run those stages.
 
+CLI Codex (Interactive)
+- An interactive CLI orchestrates EchoSquirrel‑Paradox, Garden, Limnus, and Kira.
+- Launch: `python src/codex_cli.py`
+- One‑shot: `python src/codex_cli.py validate` (any single command works)
+- Verbs: `echo`, `map`, `rotate`, `plant`, `spiral`, `bloom`, `cache`, `recall`, `time`, `validate`, `glyph`, `seal`.
+- State is stored under `state/` (transient session files); schema context is read from `schema/` if present.
+
 Steganography: Practical Notes
 - Implemented via `src/stego.py` using 1-bit LSB embedding with a `VMRP\x00`
   header, version byte, and payload length. Enable by installing Pillow.
@@ -124,3 +131,8 @@ Submodule: Echo-Community-Toolkit
   - `git submodule update --init --recursive`
 - Update the toolkit to latest main:
   - `(cd Echo-Community-Toolkit && git checkout main && git pull --ff-only)`
+
+Build Guide
+- For a step‑by‑step “from scratch” assembly guide with the customised landing pages (vessel_mrp_landing.html and per‑voice chapter 1 files), see:
+  - `docs/BUILDING_VESSEL_MRP.md`
+  - System Diagram & Commands: `docs/SYSTEM_DIAGRAM_API_REFERENCE.md`

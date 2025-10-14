@@ -1,38 +1,41 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-- `frontend/` – landing pages, generated chapters, and stego assets under `frontend/assets/`.
-- `markdown_templates/` – narrator-specific Markdown templates consumed by the generator.
-- `schema/` – JSON + YAML schema/metadata outputs produced by the build scripts.
-- `src/` – Python utilities (`generate_chapters.py`, `schema_builder.py`, `validator.py`, `stego.py`).
-- `scripts/` – automation helpers (`setup_toolkit_and_validate.sh`, `refresh_stego_assets.sh`).
-- `Echo-Community-Toolkit/` – git submodule supplying soulcode + HyperFollow tooling (keep branch `chore/soulcode-refresh` updated).
+- `frontend/` – narrative landing pages and generated chapters; stego assets in `frontend/assets/`.
+- `markdown_templates/` – narrator templates (Limnus/Garden/Kira) used by the generator.
+- `schema/` – generated `narrative_schema.*` and `chapters_metadata.*`.
+- `src/` – Python utilities: `schema_builder.py`, `generate_chapters.py`, `validator.py` (optional `stego.py`).
+- `scripts/` – automation helpers: `setup_toolkit_and_validate.sh`, `refresh_stego_assets.sh`.
+- `Echo-Community-Toolkit/` – submodule providing LSB1 stego and soulcode tooling.
 
 ## Build, Test, and Development Commands
-- `python3 src/schema_builder.py` – regenerate `schema/narrative_schema.*` definitions.
-- `python3 src/generate_chapters.py` – render chapters 2–20, rebuild metadata, emit stego PNGs (requires Pillow).
-- `python3 src/validator.py` – structural + stego validation; run after any content change.
-- `./scripts/refresh_stego_assets.sh --toolkit --push "chore: refresh stego"` – end-to-end refresh, optional auto-push.
-- `./scripts/setup_toolkit_and_validate.sh` – sync submodule, rebuild soulcode bundle, rerun validator.
+- Rebuild schema: `python3 src/schema_builder.py`.
+- Generate content: `python3 src/generate_chapters.py` (Pillow enables PNG stego to `frontend/assets/`).
+- Validate: `python3 src/validator.py` (20 chapters, rotation, flags, file presence, stego parity).
+- Full refresh: `./scripts/refresh_stego_assets.sh --toolkit` (optionally `--push "chore: refresh stego"`).
+- Toolkit sync/verify: `./scripts/setup_toolkit_and_validate.sh`.
 
 ## Coding Style & Naming Conventions
-- Python: 4-space indent, `snake_case` for functions/vars, `PascalCase` for classes. Prefer docstrings over inline comments.
-- HTML/CSS: keep existing structure; use narrator body classes (`.limnus`, `.garden`, `.kira`).
-- JSON/YAML: stable key ordering; emit via provided scripts only.
-- Avoid manual edits to generated files (`frontend/chapterXX.html`, `schema/*.json`, `frontend/assets/*.png`).
+- Python: 4‑space indent; `snake_case`; docstrings over inline comments.
+- HTML/CSS: retain structure; use narrator body classes (`.limnus`, `.garden`, `.kira`).
+- JSON/YAML: stable key order; emit via scripts only. Do not hand‑edit generated files (`frontend/chapterXX.html`, `schema/*.json`, `frontend/assets/*.png`).
 
 ## Testing Guidelines
-- Primary check: `python3 src/validator.py` (ensures 20 chapters, rotation rules, flag alignment, stego payload parity).
-- Toolkit verification: `./scripts/setup_toolkit_and_validate.sh` (runs HyperFollow `npm run verify`).
-- When modifying templates or scripts, rerun the full refresh script and confirm validator output.
+- Primary: `python3 src/validator.py` after any content/template/script change.
+- Toolkit: run `setup_toolkit_and_validate.sh` (invokes Echo Toolkit verify).
+- Keep tests hermetic; use local fixtures and temporary paths.
 
 ## Commit & Pull Request Guidelines
-- Use Conventional Commits (e.g., `feat:`, `chore:`, `fix:`). Keep subject ≤ 72 chars.
-- Group generated artifacts with the commit that produced them; include stego PNGs and schema updates together.
-- Open PRs with a summary, validation commands executed, and screenshots if landing pages change.
-- For toolkit updates, push to `chore/soulcode-refresh` in the submodule and reference the corresponding PR in the main repo.
+- Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`, `test:`); subject ≤ 72 chars.
+- Commit generated artifacts with the code that produced them (schema + metadata + stego PNGs).
+- PRs: include a summary, commands run (validator/refresh), and screenshots for landing changes. Reference submodule PRs when updating the toolkit.
 
 ## Security & Configuration Tips
-- Do not commit secrets; `.env` files belong outside the repo.
-- Node 20+ is required for toolkit automation; load via `nvm use 20` in new shells.
-- Install Pillow (`pip install Pillow`) before running stego-related scripts.
+- No secrets; keep `.env` local and gitignored.
+- Node 20+ and Python 3.8+ recommended; install Pillow for stego.
+- Use PNG‑24/32 only for LSB (no palette PNG/JPEG); MSB‑first bit packing, RGB channels only.
+
+## Architecture & Diagrams
+- System diagrams and command mapping: `vessel_narrative_system_final/docs/SYSTEM_DIAGRAM_API_REFERENCE.md`
+  - Flowchart (systems), Sequence (ritual flow), CLI Namespaces, Runtime Topology.
+ - Build guide (from scratch): `vessel_narrative_system_final/docs/BUILDING_VESSEL_MRP.md`
