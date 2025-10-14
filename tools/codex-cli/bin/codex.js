@@ -43,6 +43,14 @@ function sha256Hex(s){return crypto.createHash('sha256').update(s).digest('hex')
 function computeBlockHash({index,timestamp,prev_hash,payload}){return sha256Hex(`${index}|${timestamp}|${prev_hash||''}|${JSON.stringify(payload)}`)}
 function appendLedgerBlock(ledger,payload){ if(!ledger.blocks) ledger.blocks=[]; const index=ledger.blocks.length; const timestamp=new Date().toISOString(); const prev_hash=index>0?ledger.blocks[index-1].hash:null; const block={index,timestamp,prev_hash,payload}; block.hash=computeBlockHash(block); ledger.blocks.push(block); return block; }
 function rehashLedger(ledger){ if(!Array.isArray(ledger.blocks))return ledger; for(let i=0;i<ledger.blocks.length;i++){const b=ledger.blocks[i]; if(typeof b.index!=='number') b.index=i; b.prev_hash = i===0?null:(ledger.blocks[i-1].hash||b.prev_hash||null); if(b.payload){ b.hash=computeBlockHash({index:b.index,timestamp:b.timestamp,prev_hash:b.prev_hash,payload:b.payload}); } } return ledger; }
+// Canonical JSON (sorted keys) for stable digests
+function canonicalStringify(obj){
+  if(obj===null||typeof obj!=='object') return JSON.stringify(obj);
+  if(Array.isArray(obj)) return '['+obj.map(canonicalStringify).join(',')+']';
+  const keys=Object.keys(obj).sort();
+  const parts=keys.map(k=>JSON.stringify(k)+':'+canonicalStringify(obj[k]));
+  return '{'+parts.join(',')+'}';
+}
 
 // Python interop
 function pythonOk(){ const r=spawnSync('python3',['-V'],{encoding:'utf8'}); return r.status===0; }
@@ -99,7 +107,26 @@ try{
       else if(cmd==='view-ledger'){ let inFile=null; for(let i=0;i<rest.length;i++){ const t=rest[i]; if(t==='--file'||t==='-f') inFile=(rest[++i]||null);} const ledger=inFile?JSON.parse(fs.readFileSync(path.resolve(inFile),'utf8')):loadLedger(); (ledger.blocks||[]).forEach(b=>{ const prev=b.prev_hash?(b.prev_hash.slice?b.prev_hash.slice(0,8)+'…':String(b.prev_hash)):'∅'; const h=b.hash?(b.hash.slice?b.hash.slice(0,8)+'…':String(b.hash)):'—'; console.log(`#${b.index} ${b.timestamp} prev=${prev} hash=${h}`); console.log('  payload:', typeof b.payload==='string'?b.payload:JSON.stringify(b.payload)); }); }
       else if(cmd==='encode-ledger'){ if(!pythonOk()) throw new Error('python3 not available'); let inPath=null, cover=null, out=null, size=512; for(let i=0;i<rest.length;i++){ const t=rest[i]; if(t==='-i') inPath=rest[++i]; else if(t==='--file'||t==='-f') inPath=rest[++i]; else if(t==='-c') cover=rest[++i]; else if(t==='-o') out=rest[++i]; else if(t==='--size') size=parseInt(rest[++i]||'512',10);} if(!inPath) inPath=LEDGER_PATH; if(!cover) cover=path.join(FRONTEND_ASSETS,'ledger_cover.png'); if(!out) out=path.join(FRONTEND_ASSETS,'ledger_stego.png'); const tmpMsg=path.join(STATE_DIR,'tmp_ledger_message.json'); const msgText=fs.readFileSync(inPath,'utf8'); fs.writeFileSync(tmpMsg,msgText); const res=echoToolkitEncode({messageFile:tmpMsg,coverPath:cover,outPath:out,size}); console.log('✅ Encoded ledger →', out); console.log('CRC32:', res.crc32, 'payload_length:', res.payload_length); }
       else if(cmd==='decode-ledger'||cmd==='decode'){ if(!pythonOk()) throw new Error('python3 not available'); let image=null; for(let i=0;i<rest.length;i++){ const t=rest[i]; if(t==='-i') image=rest[++i]; else if(t==='--file'||t==='-f') image=rest[++i]; } if(!image) throw new Error('Usage: codex limnus decode-ledger -i image.png [--file path]'); const res=echoToolkitDecode({imagePath:image}); if(res.error) console.log('❌ Decode error:', res.error); else { console.log('✅ Decoded'); console.log('protocol:', res.magic||'legacy', 'crc32:', res.crc32||'N/A'); if(res.decoded_text) console.log(res.decoded_text); } }
-      else if(cmd==='verify-ledger'){ let inFile=null; for(let i=0;i<rest.length;i++){ const t=rest[i]; if(t==='--file'||t==='-f') inFile=(rest[++i]||null);} const ledger=inFile?JSON.parse(fs.readFileSync(path.resolve(inFile),'utf8')):loadLedger(); let ok=true; for(let i=0;i<(ledger.blocks||[]).length;i++){ const b=ledger.blocks[i]; const expected=computeBlockHash({index:b.index,timestamp:b.timestamp,prev_hash:b.prev_hash,payload:b.payload}); if(b.hash && b.hash!==expected){ ok=false; console.log(`❌ Hash mismatch at #${i}`); break; } if(i>0 && ledger.blocks[i-1].hash && b.prev_hash!==ledger.blocks[i-1].hash){ ok=false; console.log(`❌ Prev hash mismatch at #${i}`); break; } } console.log(ok?'✔️ Ledger hash chain OK':'❌ Ledger hash chain broken'); let image=null; for(let i=0;i<rest.length;i++){ const t=rest[i]; if(t==='-i') image=rest[++i]; } if(image){ if(!pythonOk()) throw new Error('python3 not available'); const res=echoToolkitDecode({imagePath:image}); if(!res.decoded_text){ console.log('No decoded_text in image'); process.exit(ok?0:1); } try{ const decoded=JSON.parse(res.decoded_text); const same=JSON.stringify(decoded)===JSON.stringify(ledger); console.log(same?'✔️ Stego image matches current ledger':'❌ Stego image does not match current ledger'); process.exit(ok && same ? 0:1); } catch{ console.log('Decoded payload is not JSON; cannot compare'); process.exit(ok?0:1); } } }
+      else if(cmd==='verify-ledger'){
+        let inFile=null, wantDigest=false;
+        for(let i=0;i<rest.length;i++){
+          const t=rest[i];
+          if(t==='--file'||t==='-f') inFile=(rest[++i]||null);
+          else if(t==='--digest'||t==='-d') wantDigest=true;
+        }
+        const ledger=inFile?JSON.parse(fs.readFileSync(path.resolve(inFile),'utf8')):loadLedger();
+        let ok=true;
+        for(let i=0;i<(ledger.blocks||[]).length;i++){
+          const b=ledger.blocks[i];
+          const expected=computeBlockHash({index:b.index,timestamp:b.timestamp,prev_hash:b.prev_hash,payload:b.payload});
+          if(b.hash && b.hash!==expected){ ok=false; console.log(`❌ Hash mismatch at #${i}`); break; }
+          if(i>0 && ledger.blocks[i-1].hash && b.prev_hash!==ledger.blocks[i-1].hash){ ok=false; console.log(`❌ Prev hash mismatch at #${i}`); break; }
+        }
+        console.log(ok?'✔️ Ledger hash chain OK':'❌ Ledger hash chain broken');
+        if(wantDigest){ const digest=sha256Hex(canonicalStringify(ledger)); console.log('ledger_sha256:', digest); }
+        let image=null; for(let i=0;i<rest.length;i++){ const t=rest[i]; if(t==='-i') image=rest[++i]; }
+        if(image){ if(!pythonOk()) throw new Error('python3 not available'); const res=echoToolkitDecode({imagePath:image}); if(!res.decoded_text){ console.log('No decoded_text in image'); process.exit(ok?0:1); } try{ const decoded=JSON.parse(res.decoded_text); const same=JSON.stringify(decoded)===JSON.stringify(ledger); console.log(same?'✔️ Stego image matches current ledger':'❌ Stego image does not match current ledger'); process.exit(ok && same ? 0:1); } catch{ console.log('Decoded payload is not JSON; cannot compare'); process.exit(ok?0:1); } }
+      }
       else throw new Error('Unknown limnus command');
       break; }
     case 'kira':{
@@ -110,4 +137,3 @@ try{
     default: throw new Error('Unknown module');
   }
 } catch(err){ console.error('Error:', err.message); process.exit(1); }
-
