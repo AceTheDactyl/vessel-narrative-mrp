@@ -79,7 +79,8 @@ Recommended Workflow
   - `(cd ../Echo-Community-Toolkit && npm ci && npm run soulcode:emit-schema && npm run soulcode:bundle && npm run soulcode:validate)`
 - Embed the bundle into `frontend/index.html` (auto via Echo bridge):
   - `(cd ../Echo-Community-Toolkit && SOULCODE_BUNDLE="$(pwd)/integration/outputs/echo_live.json" npm run integrate)`
-  - Re‑run `python src/validator.py` to ensure flags/files still validate.
+  - Re-run `python src/validator.py` to ensure flags/files still validate.
+- Automate all steps above: `./scripts/setup_toolkit_and_validate.sh`
 
 Steganography: Practical Notes
 - Start simple: 1‑bit per color channel, RGBA PNGs. Reserve a header with a
