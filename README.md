@@ -81,6 +81,7 @@ Recommended Workflow
   - `(cd ../Echo-Community-Toolkit && SOULCODE_BUNDLE="$(pwd)/integration/outputs/echo_live.json" npm run integrate)`
   - Re-run `python src/validator.py` to ensure flags/files still validate.
 - Automate all steps above: `./scripts/setup_toolkit_and_validate.sh`
+  - Script skips integrate/verify when Node < 20; upgrade Node to run those stages.
 
 Steganography: Practical Notes
 - Start simple: 1‑bit per color channel, RGBA PNGs. Reserve a header with a
