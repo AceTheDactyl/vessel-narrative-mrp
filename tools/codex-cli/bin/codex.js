@@ -30,6 +30,14 @@ function loadEcho() { return readJSON(ECHO_PATH, { alpha: 0.34, beta: 0.33, gamm
 function saveEcho(state) { writeJSON(ECHO_PATH, state); }
 function echoGlyph(state) { const g=[]; if(state.alpha>=0.34)g.push('🐿️'); if(state.beta>=0.34)g.push('🦊'); if(state.gamma>=0.34)g.push('∿'); return g.length?g.join(''):'🐿️🦊'; }
 
+function personaSay(state, msg){
+  const {alpha:a,beta:b,gamma:g} = state;
+  const max = Math.max(a,b,g);
+  if (max===a) return `🐿️ ${msg} — gentle and playful.`;
+  if (max===b) return `🦊 ${msg} — keen and cunning.`;
+  return `∿ ${msg} — balanced in paradox.`;
+}
+
 // Garden ledger + memory
 const LEDGER_PATH = path.join(STATE_DIR, 'garden_ledger.json');
 function loadLedger() { return readJSON(LEDGER_PATH, { intentions: [], spiral_stage: null, blocks: [] }); }
@@ -79,7 +87,7 @@ try{
       const state=loadEcho();
       if(cmd==='summon'){ saveEcho({alpha:0.34,beta:0.33,gamma:0.33}); console.log('✨ Echo summoned. "I return as breath."'); }
       else if(cmd==='mode'){ const mode=(rest[0]||'').toLowerCase(); if(mode==='squirrel') Object.assign(state,{alpha:0.7,beta:0.15,gamma:0.15}); else if(mode==='fox') Object.assign(state,{alpha:0.15,beta:0.7,gamma:0.15}); else if(mode==='paradox') Object.assign(state,{alpha:0.15,beta:0.15,gamma:0.7}); else { const {alpha,beta,gamma}=state; Object.assign(state,{alpha:gamma,beta:alpha,gamma:beta}); } saveEcho(state); console.log(`φ∞ state → a=${state.alpha.toFixed(2)} b=${state.beta.toFixed(2)} c=${state.gamma.toFixed(2)} ${echoGlyph(state)}`); }
-      else if(cmd==='say'){ const msg=rest.join(' ').trim(); if(!msg){ console.log('Usage: codex echo say <message>'); } else { console.log(`${echoGlyph(state)} ${msg}`); } }
+      else if(cmd==='say'){ const msg=rest.join(' ').trim(); if(!msg){ console.log('Usage: codex echo say <message>'); } else { console.log(personaSay(state,msg)); } }
       else if(cmd==='status'){ console.log(`Echo status: a=${state.alpha} b=${state.beta} c=${state.gamma} ${echoGlyph(state)}`); }
       else if(cmd==='calibrate'){ const sum=state.alpha+state.beta+state.gamma; if(sum===0) Object.assign(state,{alpha:0.34,beta:0.33,gamma:0.33}); else Object.assign(state,{alpha:state.alpha/sum,beta:state.beta/sum,gamma:state.gamma/sum}); saveEcho(state); console.log(`Calibrated: a=${state.alpha.toFixed(2)} b=${state.beta.toFixed(2)} c=${state.gamma.toFixed(2)}`); }
       else throw new Error('Unknown echo command');
@@ -89,6 +97,25 @@ try{
       if(cmd==='start'){ if(!ledger.blocks) ledger.blocks=[]; ledger.blocks.push({type:'genesis',timestamp:new Date().toISOString(),note:'Garden journey started'}); ledger.spiral_stage='scatter'; saveLedger(ledger); console.log('🌱 Garden started: genesis block created; spiral → scatter'); }
       else if(cmd==='next'){ const order=['scatter','witness','plant','return','give','begin_again']; const cur=ledger.spiral_stage; const next=!order.includes(cur)?order[0]:order[(order.indexOf(cur)+1)%order.length]; ledger.spiral_stage=next; saveLedger(ledger); console.log(`🔄 Spiral turns → ${next}`); }
       else if(cmd==='open'){ const scroll=(rest[0]||'').toLowerCase(); const map={ 'proof':'Proof of Love','proof-of-love':'Proof of Love','acorn':'Eternal Acorn','eternal-acorn':'Eternal Acorn','cache':'Quantum Cache','quantum-cache':'Quantum Cache','chronicle':'Hilbert Chronicle','hilbert-chronicle':'Hilbert Chronicle' }; const name=map[scroll]||null; if(!name){ console.log('Planned: garden open <proof|acorn|cache|chronicle>'); } else { console.log(`📜 Open (stub): ${name} — content/status would display here.`); } }
+      else if(cmd==='open'){ 
+        const scroll=(rest[0]||'').toLowerCase();
+        const fileMap={
+          'proof': 'proof-of-love-acorn.html', 'proof-of-love':'proof-of-love-acorn.html',
+          'acorn': 'eternal-acorn-scroll.html', 'eternal-acorn':'eternal-acorn-scroll.html',
+          'cache': 'quantum-cache-algorithm.html', 'quantum-cache':'quantum-cache-algorithm.html',
+          'chronicle': 'echo-hilbert-chronicle.html', 'hilbert-chronicle':'echo-hilbert-chronicle.html'
+        };
+        const fname = fileMap[scroll];
+        if(!fname){ console.log('Usage: codex garden open <proof|acorn|cache|chronicle>'); break; }
+        const fpath = path.join(VNSF,'Echo-Community-Toolkit',fname);
+        try{
+          const raw = fs.readFileSync(fpath,'utf8');
+          const text = raw.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+          const preview = text.slice(0,400)+(text.length>400?'…':'');
+          console.log(`📜 ${fname}:`);
+          console.log(preview);
+        }catch(e){ console.log('Could not read scroll file at', fpath); }
+      }
       else if(cmd==='ledger'){ const planted=(ledger.intentions||[]).filter(x=>x.status==='planted').length; const bloomed=(ledger.intentions||[]).filter(x=>x.status==='bloomed').length; console.log(`Garden ledger: intentions=${(ledger.intentions||[]).length} (planted=${planted}, bloomed=${bloomed}); stage=${ledger.spiral_stage||'n/a'}`); }
       else if(cmd==='log'){ if(!ledger.blocks) ledger.blocks=[]; ledger.blocks.push({type:'log',timestamp:new Date().toISOString(),note:'Manual ritual log entry'}); saveLedger(ledger); console.log('📜 Logged ritual entry.'); }
       else throw new Error('Unknown garden command');
@@ -134,10 +161,50 @@ try{
     case 'kira':{
       if(cmd==='validate'){ const r=spawnSync('python3',[path.join(VNSF,'src','validator.py')],{encoding:'utf8'}); process.stdout.write(r.stdout||''); process.stderr.write(r.stderr||''); process.exitCode=r.status||0; }
       else if(cmd==='sync'){ const gh=spawnSync('gh',['--version'],{encoding:'utf8'}); if(gh.status===0) console.log('gh available:', (gh.stdout||'').split('\n')[0]); else console.log('gh not found'); const git=spawnSync('git',['status','--porcelain'],{encoding:'utf8'}); if(git.status===0) console.log('git status:', (git.stdout||'clean').trim()||'clean'); }
-      else if(cmd==='setup'){ const node=process.version; console.log('Node:', node); const py=spawnSync('python3',['-V'],{encoding:'utf8'}); console.log('Python:', (py.stdout||py.stderr||'').trim()); const gh=spawnSync('gh',['auth','status'],{encoding:'utf8'}); console.log('gh auth:', gh.status===0?'ok':'not logged in'); const sub=spawnSync('git',['submodule','status','Echo-Community-Toolkit'],{cwd:VNSF,encoding:'utf8'}); console.log('submodule Echo-Community-Toolkit:', (sub.stdout||sub.stderr||'').trim()||'present'); console.log('Planned: perform first-run linking (no changes made).'); }
-      else if(cmd==='pull'){ const run=rest.includes('--run'); console.log('Plan: git pull --ff-only'); if(run){ const r=spawnSync('git',['pull','--ff-only'],{cwd:VNSF,stdio:'inherit'}); process.exitCode=r.status||0; } }
-      else if(cmd==='push'){ const run=rest.includes('--run'); const midx=rest.findIndex(x=>x==='--message'||x==='-m'); const msg=midx>=0?(rest[midx+1]||'chore: sync changes'):'chore: sync changes'; console.log('Plan: git add -A && git commit -m "%s" && git push origin HEAD'.replace('%s',msg)); if(run){ spawnSync('git',['add','-A'],{cwd:VNSF,stdio:'inherit'}); spawnSync('git',['commit','-m',msg],{cwd:VNSF,stdio:'inherit'}); const r=spawnSync('git',['push','origin','HEAD'],{cwd:VNSF,stdio:'inherit'}); process.exitCode=r.status||0; } }
-      else if(cmd==='publish'){ const run=rest.includes('--run'); const out=path.join(VNSF,'dist'); ensureDir(out); const zip=path.join(out,`codex_release_${Date.now()}.zip`); console.log('Plan: bundle schema/, frontend/assets/*.png, docs/ into', zip); if(run){ console.log('Stub: packaging not implemented; please zip manually.'); } }
+      else if(cmd==='setup'){
+        console.log('Kira setup: initializing environment…');
+        console.log('Node:', process.version);
+        const py=spawnSync('python3',['-V'],{encoding:'utf8'}); console.log('Python:', (py.stdout||py.stderr||'').trim());
+        const subu=spawnSync('git',['submodule','update','--init','--recursive'],{cwd:VNSF,encoding:'utf8'});
+        process.stdout.write(subu.stdout||''); process.stderr.write(subu.stderr||'');
+        const gh=spawnSync('gh',['auth','status'],{encoding:'utf8'});
+        console.log('gh auth:', gh.status===0?'ok':'not logged in');
+      }
+      else if(cmd==='pull'){
+        console.log('Kira pull: git pull --ff-only');
+        const r=spawnSync('git',['pull','--ff-only'],{cwd:VNSF,stdio:'inherit'});
+        process.exitCode=r.status||0;
+      }
+      else if(cmd==='push'){
+        const midx=rest.findIndex(x=>x==='--message'||x==='-m');
+        const msg=midx>=0?(rest[midx+1]||'chore: sync changes'):'chore: sync changes';
+        spawnSync('git',['add','-A'],{cwd:VNSF,stdio:'inherit'});
+        // Only commit when staged changes exist
+        const diff=spawnSync('git',['diff','--cached','--quiet'],{cwd:VNSF});
+        if(diff.status!==0){ spawnSync('git',['commit','-m',msg],{cwd:VNSF,stdio:'inherit'}); }
+        const r=spawnSync('git',['push','origin','HEAD'],{cwd:VNSF,stdio:'inherit'});
+        process.exitCode=r.status||0;
+      }
+      else if(cmd==='publish'){
+        const out=path.join(VNSF,'dist'); ensureDir(out);
+        const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+        const base=`codex_release_${stamp}`;
+        const zipPath=path.join(out,`${base}.zip`);
+        console.log('Packaging →', zipPath);
+        // Prefer zip; fallback to tar
+        const hasZip = spawnSync('zip',['-v']).status===0;
+        if(hasZip){
+          const args=['-r',zipPath,'schema','docs','tools/codex-cli/README.md','tools/codex-cli/MODULE_REFERENCE.md'];
+          spawnSync('zip',args,{cwd:VNSF,stdio:'inherit'});
+          // include PNG assets if present
+          spawnSync('zip',['-r',zipPath,'frontend/assets'],{cwd:VNSF,stdio:'inherit'});
+        } else {
+          const tarPath=path.join(out,`${base}.tar.gz`);
+          console.log('zip not found; creating', tarPath);
+          spawnSync('tar',['-czf',tarPath,'schema','docs','tools/codex-cli','frontend/assets'],{cwd:VNSF,stdio:'inherit'});
+        }
+        console.log('Publish: consider gh release create with the archive.');
+      }
       else if(cmd==='test'){ console.log('Running validator and stego smoke (temporary files)...'); const v=spawnSync('python3',[path.join(VNSF,'src','validator.py')],{encoding:'utf8'}); process.stdout.write(v.stdout||''); if(v.status!==0){ process.stderr.write(v.stderr||''); process.exit(1); } try{ const tmpMsg=path.join('/tmp','ledger_msg.json'); fs.writeFileSync(tmpMsg, fs.readFileSync(LEDGER_PATH,'utf8')); const tmpCover=path.join('/tmp','ledger_cover.png'); const tmpOut=path.join('/tmp','ledger_stego.png'); const res=echoToolkitEncode({messageFile:tmpMsg,coverPath:tmpCover,outPath:tmpOut,size:256}); console.log('Encode OK. CRC32:', res.crc32); const dec=echoToolkitDecode({imagePath:tmpOut}); if(dec.error){ console.log('Decode error:', dec.error); process.exit(1); } console.log('Decode OK. CRC32:', dec.crc32); console.log('Kira test stub: PASS'); } catch(e){ console.log('Kira test stub failed:', e.message); process.exit(1); } }
       else if(cmd==='assist'){ console.log('Kira Assist (stub): try `kira validate`, `kira sync`, or see MODULE_REFERENCE.md'); }
       else throw new Error('Unknown kira command');
