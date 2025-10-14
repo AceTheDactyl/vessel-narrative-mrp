@@ -178,7 +178,10 @@ try{
       else if(cmd==='push'){
         const midx=rest.findIndex(x=>x==='--message'||x==='-m');
         const msg=midx>=0?(rest[midx+1]||'chore: sync changes'):'chore: sync changes';
-        spawnSync('git',['add','-A'],{cwd:VNSF,stdio:'inherit'});
+        // Default: update tracked files only to avoid adding runtime artifacts
+        const addAll = rest.includes('--all');
+        const addArgs = addAll ? ['add','-A'] : ['add','-u'];
+        spawnSync('git',addArgs,{cwd:VNSF,stdio:'inherit'});
         // Only commit when staged changes exist
         const diff=spawnSync('git',['diff','--cached','--quiet'],{cwd:VNSF});
         if(diff.status!==0){ spawnSync('git',['commit','-m',msg],{cwd:VNSF,stdio:'inherit'}); }
