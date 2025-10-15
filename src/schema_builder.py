@@ -21,6 +21,7 @@ def build_schema() -> dict:
             "file",
             "summary",
             "timestamp",
+            "provenance",
         ],
         "properties": {
             "chapter": {"type": "integer", "minimum": 1, "maximum": 20},
@@ -40,6 +41,18 @@ def build_schema() -> dict:
             "summary": {"type": "string"},
             "timestamp": {"type": "string", "format": "date-time"},
             "stego_png": {"type": "string"},
+            "provenance": {
+                "type": "object",
+                "additionalProperties": False,
+                "required": ["scroll", "label", "paragraph_index", "excerpt", "glyph_refs"],
+                "properties": {
+                    "scroll": {"type": "string"},
+                    "label": {"type": "string"},
+                    "paragraph_index": {"type": "integer", "minimum": 0},
+                    "excerpt": {"type": "string"},
+                    "glyph_refs": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+                },
+            },
         },
     }
 

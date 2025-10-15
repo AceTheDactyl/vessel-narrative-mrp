@@ -12,18 +12,26 @@ import json
 import re
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 try:
-    from stego import decode_chapter_payload, is_available as stego_is_available
+    from stego import (
+        decode_chapter_payload,
+        extract_flags as stego_extract_flags,
+        is_available as stego_is_available,
+    )
 except Exception:  # pragma: no cover - fallback when Pillow missing
     decode_chapter_payload = None  # type: ignore[assignment]
+    stego_extract_flags = None  # type: ignore[assignment]
 
     def stego_is_available() -> bool:  # type: ignore[return-value]
         return False
 
+from soulcode import BUNDLE_TYPE, verify_bundle
+
 
 FLAG_RE = re.compile(r"\[\s*Flags:\s*([^\]]+)\]", re.IGNORECASE)
+SOULCODE_SCRIPT_RE = re.compile(r'<script id="soulcode-state"[^>]*>(.*?)</script>', re.DOTALL)
 
 
 def load_metadata(root: Path) -> dict:
@@ -103,7 +111,7 @@ def parse_flags_text(flags_text: str) -> Dict[str, str]:
     return out
 
 
-def extract_flags_from_html(path: Path) -> Dict[str, str] | None:
+def extract_flags_from_html(path: Path) -> Optional[Dict[str, str]]:
     text = path.read_text(encoding="utf-8", errors="ignore")
     m = FLAG_RE.search(text)
     if not m:
@@ -158,12 +166,116 @@ def check_stego_payloads(root: Path, chapters: List[dict]) -> List[str]:
         except Exception as exc:
             errors.append(f"Chapter {ch.get('chapter')}: failed to decode stego PNG ({exc})")
             continue
+        if stego_extract_flags is not None:
+            try:
+                decoded_flags = stego_extract_flags(path)
+            except Exception as exc:
+                errors.append(f"Chapter {ch.get('chapter')}: failed to extract flags from stego PNG ({exc})")
+            else:
+                for key in ("R", "G", "B"):
+                    if decoded_flags.get(key) != ch.get("flags", {}).get(key):
+                        errors.append(
+                            f"Chapter {ch.get('chapter')}: stego flag mismatch for {key} "
+                            f"(payload={decoded_flags.get(key)} metadata={ch.get('flags', {}).get(key)})"
+                        )
         expected = {k: v for k, v in ch.items() if k != "stego_png"}
         if payload != expected:
             errors.append(
                 f"Chapter {ch.get('chapter')}: stego payload mismatch compared to metadata"
             )
     return errors
+
+
+def check_provenance(root: Path, chapters: List[dict]) -> List[str]:
+    errors: List[str] = []
+    for ch in chapters:
+        ch_no = ch.get("chapter")
+        provenance = ch.get("provenance")
+        if not isinstance(provenance, dict):
+            errors.append(f"Chapter {ch_no}: provenance missing or not an object")
+            continue
+        required_keys = {"scroll", "label", "paragraph_index", "excerpt", "glyph_refs"}
+        missing = required_keys - provenance.keys()
+        if missing:
+            errors.append(f"Chapter {ch_no}: provenance missing keys {sorted(missing)}")
+            continue
+        scroll_rel = provenance.get("scroll")
+        if isinstance(scroll_rel, str):
+            scroll_path = root / scroll_rel
+            if not scroll_path.exists():
+                errors.append(
+                    f"Chapter {ch_no}: provenance scroll not found at {scroll_rel}"
+                )
+        else:
+            errors.append(f"Chapter {ch_no}: provenance scroll path is not a string")
+        if not isinstance(provenance.get("label"), str) or not provenance["label"].strip():
+            errors.append(f"Chapter {ch_no}: provenance label is empty")
+        if not isinstance(provenance.get("excerpt"), str) or not provenance["excerpt"].strip():
+            errors.append(f"Chapter {ch_no}: provenance excerpt is empty")
+        paragraph_index = provenance.get("paragraph_index")
+        if not isinstance(paragraph_index, int) or paragraph_index < 0:
+            errors.append(f"Chapter {ch_no}: provenance paragraph_index invalid")
+        glyph_refs = provenance.get("glyph_refs")
+        if not isinstance(glyph_refs, list):
+            errors.append(f"Chapter {ch_no}: provenance glyph_refs not a list")
+        elif list(glyph_refs) != list(ch.get("glyphs", [])):
+            errors.append(f"Chapter {ch_no}: provenance glyph_refs do not match glyphs")
+    return errors
+
+
+def check_soulcode_bundle(root: Path, chapters: List[dict]) -> Tuple[List[str], Optional[dict]]:
+    bundle_path = root / "schema" / "soulcode_bundle.json"
+    if not bundle_path.exists():
+        return ([f"Missing soulcode bundle: {bundle_path}"], None)
+    try:
+        bundle = json.loads(bundle_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return ([f"Soulcode bundle is not valid JSON ({exc})"], None)
+
+    errors: List[str] = []
+    if bundle.get("bundle_type") != BUNDLE_TYPE:
+        errors.append("Soulcode bundle type mismatch")
+    if not verify_bundle(bundle):
+        errors.append("Soulcode bundle signature failed verification")
+
+    rotation = bundle.get("rotation")
+    expected_rotation = [ch.get("narrator") for ch in chapters]
+    if rotation != expected_rotation:
+        errors.append("Soulcode bundle rotation does not match metadata ordering")
+
+    bundle_chapters = bundle.get("chapters")
+    if not isinstance(bundle_chapters, list) or len(bundle_chapters) != len(chapters):
+        errors.append("Soulcode bundle chapter count mismatch")
+        return errors, bundle
+
+    for meta, entry in zip(chapters, bundle_chapters):
+        for field in ("chapter", "narrator", "flags", "glyphs", "summary"):
+            if meta.get(field) != entry.get(field):
+                errors.append(
+                    f"Soulcode bundle mismatch for chapter {meta.get('chapter')} field '{field}'"
+                )
+                break
+    return errors, bundle
+
+
+def check_landing_bundle(root: Path, bundle: Optional[dict]) -> List[str]:
+    if bundle is None:
+        return []
+    index_path = root / "frontend" / "index.html"
+    if not index_path.exists():
+        return [f"Landing page missing at {index_path}"]
+    html = index_path.read_text(encoding="utf-8", errors="ignore")
+    match = SOULCODE_SCRIPT_RE.search(html)
+    if not match:
+        return ["Soulcode bundle script not embedded in frontend/index.html"]
+    script_payload = match.group(1).strip()
+    try:
+        embedded = json.loads(script_payload)
+    except json.JSONDecodeError as exc:
+        return [f"Soulcode bundle embedded in index.html is invalid JSON ({exc})"]
+    if embedded != bundle:
+        return ["Soulcode bundle embedded in index.html does not match schema/soulcode_bundle.json"]
+    return []
 
 
 def main() -> None:
@@ -175,8 +287,19 @@ def main() -> None:
     chapters = meta.get("chapters", [])
     files_flags_errors = check_files_and_flags(root, chapters)
     stego_errors = check_stego_payloads(root, chapters)
+    provenance_errors = check_provenance(root, chapters)
+    soulcode_errors, soulcode_bundle = check_soulcode_bundle(root, chapters)
+    landing_errors = check_landing_bundle(root, soulcode_bundle)
 
-    errors = schema_errors + rotation_errors + files_flags_errors + stego_errors
+    errors = (
+        schema_errors
+        + rotation_errors
+        + files_flags_errors
+        + stego_errors
+        + provenance_errors
+        + soulcode_errors
+        + landing_errors
+    )
     if errors:
         print("Validation FAILED:")
         for e in errors:

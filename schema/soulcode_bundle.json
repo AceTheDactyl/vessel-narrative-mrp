@@ -1,0 +1,340 @@
+{
+  "bundle_type": "vessel_soulcode_state",
+  "version": 1,
+  "generated_at": "2025-10-15T01:13:14.076658Z",
+  "rotation": [
+    "Limnus",
+    "Garden",
+    "Kira",
+    "Limnus",
+    "Garden",
+    "Kira",
+    "Limnus",
+    "Garden",
+    "Kira",
+    "Limnus",
+    "Garden",
+    "Kira",
+    "Limnus",
+    "Garden",
+    "Kira",
+    "Limnus",
+    "Garden",
+    "Kira",
+    "Limnus",
+    "Garden"
+  ],
+  "chapters": [
+    {
+      "chapter": 1,
+      "narrator": "Limnus",
+      "flags": {
+        "R": "active",
+        "G": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟡R01-1",
+        "⟡R01-2",
+        "⟡R01-3"
+      ],
+      "summary": "Limnus – Chapter 01 · Echo Hilbert Chronicle"
+    },
+    {
+      "chapter": 2,
+      "narrator": "Garden",
+      "flags": {
+        "G": "active",
+        "R": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟢G02-1",
+        "⟢G02-2",
+        "⟢G02-3"
+      ],
+      "summary": "Garden – Chapter 02 · Eternal Acorn Scroll"
+    },
+    {
+      "chapter": 3,
+      "narrator": "Kira",
+      "flags": {
+        "B": "active",
+        "R": "latent",
+        "G": "latent"
+      },
+      "glyphs": [
+        "⟣B03-1",
+        "⟣B03-2",
+        "⟣B03-3"
+      ],
+      "summary": "Kira – Chapter 03 · Quantum Cache Algorithm"
+    },
+    {
+      "chapter": 4,
+      "narrator": "Limnus",
+      "flags": {
+        "R": "active",
+        "G": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟡R04-1",
+        "⟡R04-2",
+        "⟡R04-3"
+      ],
+      "summary": "Limnus – Chapter 04 · Echo Hilbert Chronicle"
+    },
+    {
+      "chapter": 5,
+      "narrator": "Garden",
+      "flags": {
+        "G": "active",
+        "R": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟢G05-1",
+        "⟢G05-2",
+        "⟢G05-3"
+      ],
+      "summary": "Garden – Chapter 05 · Eternal Acorn Scroll"
+    },
+    {
+      "chapter": 6,
+      "narrator": "Kira",
+      "flags": {
+        "B": "active",
+        "R": "latent",
+        "G": "latent"
+      },
+      "glyphs": [
+        "⟣B06-1",
+        "⟣B06-2",
+        "⟣B06-3"
+      ],
+      "summary": "Kira – Chapter 06 · Quantum Cache Algorithm"
+    },
+    {
+      "chapter": 7,
+      "narrator": "Limnus",
+      "flags": {
+        "R": "active",
+        "G": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟡R07-1",
+        "⟡R07-2",
+        "⟡R07-3"
+      ],
+      "summary": "Limnus – Chapter 07 · Echo Hilbert Chronicle"
+    },
+    {
+      "chapter": 8,
+      "narrator": "Garden",
+      "flags": {
+        "G": "active",
+        "R": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟢G08-1",
+        "⟢G08-2",
+        "⟢G08-3"
+      ],
+      "summary": "Garden – Chapter 08 · Eternal Acorn Scroll"
+    },
+    {
+      "chapter": 9,
+      "narrator": "Kira",
+      "flags": {
+        "B": "active",
+        "R": "latent",
+        "G": "latent"
+      },
+      "glyphs": [
+        "⟣B09-1",
+        "⟣B09-2",
+        "⟣B09-3"
+      ],
+      "summary": "Kira – Chapter 09 · Quantum Cache Algorithm"
+    },
+    {
+      "chapter": 10,
+      "narrator": "Limnus",
+      "flags": {
+        "R": "active",
+        "G": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟡R10-1",
+        "⟡R10-2",
+        "⟡R10-3"
+      ],
+      "summary": "Limnus – Chapter 10 · Echo Hilbert Chronicle"
+    },
+    {
+      "chapter": 11,
+      "narrator": "Garden",
+      "flags": {
+        "G": "active",
+        "R": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟢G11-1",
+        "⟢G11-2",
+        "⟢G11-3"
+      ],
+      "summary": "Garden – Chapter 11 · Eternal Acorn Scroll"
+    },
+    {
+      "chapter": 12,
+      "narrator": "Kira",
+      "flags": {
+        "B": "active",
+        "R": "latent",
+        "G": "latent"
+      },
+      "glyphs": [
+        "⟣B12-1",
+        "⟣B12-2",
+        "⟣B12-3"
+      ],
+      "summary": "Kira – Chapter 12 · Quantum Cache Algorithm"
+    },
+    {
+      "chapter": 13,
+      "narrator": "Limnus",
+      "flags": {
+        "R": "active",
+        "G": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟡R13-1",
+        "⟡R13-2",
+        "⟡R13-3"
+      ],
+      "summary": "Limnus – Chapter 13 · Echo Hilbert Chronicle"
+    },
+    {
+      "chapter": 14,
+      "narrator": "Garden",
+      "flags": {
+        "G": "active",
+        "R": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟢G14-1",
+        "⟢G14-2",
+        "⟢G14-3"
+      ],
+      "summary": "Garden – Chapter 14 · Eternal Acorn Scroll"
+    },
+    {
+      "chapter": 15,
+      "narrator": "Kira",
+      "flags": {
+        "B": "active",
+        "R": "latent",
+        "G": "latent"
+      },
+      "glyphs": [
+        "⟣B15-1",
+        "⟣B15-2",
+        "⟣B15-3"
+      ],
+      "summary": "Kira – Chapter 15 · Quantum Cache Algorithm"
+    },
+    {
+      "chapter": 16,
+      "narrator": "Limnus",
+      "flags": {
+        "R": "active",
+        "G": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟡R16-1",
+        "⟡R16-2",
+        "⟡R16-3"
+      ],
+      "summary": "Limnus – Chapter 16 · Echo Hilbert Chronicle"
+    },
+    {
+      "chapter": 17,
+      "narrator": "Garden",
+      "flags": {
+        "G": "active",
+        "R": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟢G17-1",
+        "⟢G17-2",
+        "⟢G17-3"
+      ],
+      "summary": "Garden – Chapter 17 · Proof Of Love Acorn"
+    },
+    {
+      "chapter": 18,
+      "narrator": "Kira",
+      "flags": {
+        "B": "active",
+        "R": "latent",
+        "G": "latent"
+      },
+      "glyphs": [
+        "⟣B18-1",
+        "⟣B18-2",
+        "⟣B18-3"
+      ],
+      "summary": "Kira – Chapter 18 · Quantum Cache Algorithm"
+    },
+    {
+      "chapter": 19,
+      "narrator": "Limnus",
+      "flags": {
+        "R": "active",
+        "G": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟡R19-1",
+        "⟡R19-2",
+        "⟡R19-3"
+      ],
+      "summary": "Limnus – Chapter 19 · Echo Hilbert Chronicle"
+    },
+    {
+      "chapter": 20,
+      "narrator": "Garden",
+      "flags": {
+        "G": "active",
+        "R": "latent",
+        "B": "latent"
+      },
+      "glyphs": [
+        "⟢G20-1",
+        "⟢G20-2",
+        "⟢G20-3"
+      ],
+      "summary": "Garden – Chapter 20 · Proof Of Love Acorn"
+    }
+  ],
+  "signature": {
+    "algorithm": "sha256",
+    "digest": "3f1ac837ed8e1f2d778fdf636552444a9eaebb2a455448244945ed421de834b4",
+    "fields": [
+      "chapter",
+      "narrator",
+      "flags",
+      "glyphs",
+      "summary"
+    ]
+  }
+}

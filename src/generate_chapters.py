@@ -6,7 +6,10 @@ Chapter 1 pages are bespoke and already present in `frontend/`.
 from __future__ import annotations
 
 import json
+import re
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from html import unescape
 from pathlib import Path
 from typing import Dict, List
 
@@ -18,6 +21,8 @@ except Exception:  # pragma: no cover - fallback when stego module missing
     def stego_is_available() -> bool:  # type: ignore[return-value]
         return False
 
+from soulcode import build_bundle, write_bundle
+
 
 VOICES = ["Limnus", "Garden", "Kira"]
 FLAGS_MAP: Dict[str, Dict[str, str]] = {
@@ -25,6 +30,32 @@ FLAGS_MAP: Dict[str, Dict[str, str]] = {
     "Garden": {"G": "active", "R": "latent", "B": "latent"},
     "Kira": {"B": "active", "R": "latent", "G": "latent"},
 }
+CANONICAL_SCROLLS: Dict[str, List[str]] = {
+    "Limnus": [
+        "Echo-Community-Toolkit/echo-hilbert-chronicle.html",
+        "Echo-Community-Toolkit/echo-garden-quantum-triquetra.html",
+    ],
+    "Garden": [
+        "Echo-Community-Toolkit/eternal-acorn-scroll.html",
+        "Echo-Community-Toolkit/proof-of-love-acorn.html",
+    ],
+    "Kira": [
+        "Echo-Community-Toolkit/quantum-cache-algorithm.html",
+        "Echo-Community-Toolkit/integrated-lambda-echo-garden.html",
+    ],
+}
+PARAGRAPH_RE = re.compile(r"<p[^>]*>(.*?)</p>", re.IGNORECASE | re.DOTALL)
+TAG_RE = re.compile(r"<[^>]+>")
+MAX_EXCERPT_LENGTH = 420
+SOULCODE_SCRIPT_RE = re.compile(r'<script id="soulcode-state"[^>]*>.*?</script>', re.DOTALL)
+
+
+@dataclass(frozen=True)
+class ScrollExcerpt:
+    scroll: Path
+    paragraph_index: int
+    text: str
+    label: str
 
 
 def ts_now() -> str:
@@ -36,7 +67,7 @@ def read_template(root: Path, narrator: str) -> str:
     return tpath.read_text(encoding="utf-8")
 
 
-def default_body(narrator: str, chapter: int) -> str:
+def base_voice_statement(narrator: str, chapter: int) -> str:
     if narrator == "Limnus":
         return (
             "Limnus listens for the origin code and its gentle recursion. "
@@ -63,14 +94,130 @@ def glyphs_for(narrator: str, chapter: int) -> List[str]:
     return [f"{base}{chapter:02d}-{i}" for i in range(1, 4)]
 
 
-def fill_placeholders(tpl: str, narrator: str, chapter: int, flags: Dict[str, str], glyphs: List[str]) -> str:
+def canonical_label(path: Path) -> str:
+    stem = path.stem.replace("_", " ").replace("-", " ")
+    return stem.title()
+
+
+def strip_tags(fragment: str) -> str:
+    no_tags = TAG_RE.sub("", fragment)
+    collapsed = re.sub(r"\s+", " ", unescape(no_tags))
+    return collapsed.strip()
+
+
+def clean_excerpt_text(fragment: str) -> str:
+    text = strip_tags(fragment)
+    if len(text) > MAX_EXCERPT_LENGTH:
+        trimmed = text[:MAX_EXCERPT_LENGTH].rsplit(" ", 1)[0]
+        text = trimmed.rstrip(",;:") + "..."
+    return text
+
+
+def load_scroll_excerpts(root: Path) -> Dict[str, List[ScrollExcerpt]]:
+    excerpts: Dict[str, List[ScrollExcerpt]] = {voice: [] for voice in VOICES}
+    for voice, rel_paths in CANONICAL_SCROLLS.items():
+        for rel in rel_paths:
+            path = root / rel
+            if not path.exists():
+                continue
+            raw = path.read_text(encoding="utf-8", errors="ignore")
+            for idx, fragment in enumerate(PARAGRAPH_RE.findall(raw)):
+                cleaned = clean_excerpt_text(fragment)
+                if len(cleaned) < 60:
+                    continue
+                excerpts[voice].append(
+                    ScrollExcerpt(
+                        scroll=path,
+                        paragraph_index=idx,
+                        text=cleaned,
+                        label=canonical_label(path),
+                    )
+                )
+    for voice, items in excerpts.items():
+        if not items:
+            fallback = ScrollExcerpt(
+                scroll=root / f"markdown_templates/{voice.lower()}_template.md",
+                paragraph_index=0,
+                text=base_voice_statement(voice, 0),
+                label=f"{voice} Template",
+            )
+            items.append(fallback)
+    return excerpts
+
+
+def relativize(path: Path, root: Path) -> str:
+    try:
+        return str(path.relative_to(root))
+    except ValueError:  # pragma: no cover - defensive
+        return str(path)
+
+
+def select_excerpt(
+    narrator: str,
+    chapters_seen: Dict[str, int],
+    excerpts_by_voice: Dict[str, List[ScrollExcerpt]],
+) -> ScrollExcerpt:
+    pool = excerpts_by_voice.get(narrator, [])
+    if not pool:
+        return ScrollExcerpt(
+            scroll=Path(f"{narrator.lower()}_fallback"),
+            paragraph_index=0,
+            text=base_voice_statement(narrator, 0),
+            label=f"{narrator} Fallback",
+        )
+    idx = chapters_seen[narrator] % len(pool)
+    chapters_seen[narrator] += 1
+    return pool[idx]
+
+
+def compose_body_markdown(
+    narrator: str,
+    chapter: int,
+    excerpt: ScrollExcerpt,
+    glyphs: List[str],
+) -> str:
+    intro = base_voice_statement(narrator, chapter)
+    glyph_line = (
+        f"Glyph resonance aligns {glyphs[0]}, {glyphs[1]}, and {glyphs[2]} "
+        f"with the scroll memory."
+    )
+    blockquote = f"> {excerpt.text}"
+    provenance_line = (
+        f"Source Scroll: {excerpt.label} · paragraph {excerpt.paragraph_index + 1}"
+    )
+    return "\n\n".join([intro, glyph_line, blockquote, provenance_line])
+
+
+def embed_soulcode_bundle(index_path: Path, bundle: dict) -> None:
+    payload = json.dumps(bundle, ensure_ascii=False, separators=(",", ":"))
+    script_tag = f'  <script id="soulcode-state" type="application/json">{payload}</script>'
+    html = index_path.read_text(encoding="utf-8")
+    if SOULCODE_SCRIPT_RE.search(html):
+        html = SOULCODE_SCRIPT_RE.sub(script_tag + "\n", html)
+    else:
+        insertion = "\n" + script_tag + "\n"
+        marker = "</body>"
+        if marker in html:
+            html = html.replace(marker, insertion + marker, 1)
+        else:  # pragma: no cover - defensive fallback
+            html = html + insertion
+    index_path.write_text(html, encoding="utf-8")
+
+
+def fill_placeholders(
+    tpl: str,
+    narrator: str,
+    chapter: int,
+    flags: Dict[str, str],
+    glyphs: List[str],
+    body_md: str,
+) -> str:
     flags_line = f"R {flags['R']}, G {flags['G']}, B {flags['B']}"
     glyphs_line = "Glyphs: " + " · ".join(glyphs)
-    body = default_body(narrator, chapter)
     out = (
         tpl.replace("{{chapter_number}}", f"{chapter}")
         .replace("{{narrator}}", narrator)
-        .replace("{{body}}", body)
+        .replace("{{body}}", body_md)
         .replace("{{flags}}", flags_line)
         .replace("{{glyphs_line}}", glyphs_line)
     )
@@ -102,6 +249,9 @@ def render_markdown_min(md: str) -> str:
         elif line.lower().startswith("glyphs:"):
             flush_paragraph()
             html_lines.append(f"<div class=\"glyphs\">{line}</div>")
+        elif line.startswith(">"):
+            flush_paragraph()
+            html_lines.append(f"<blockquote>{line.lstrip('> ').strip()}</blockquote>")
         else:
             paragraph.append(line)
     flush_paragraph()
@@ -156,6 +306,8 @@ def main() -> None:
     root = Path(__file__).resolve().parents[1]
     frontend = root / "frontend"
     assets_dir = frontend / "assets"
+    excerpts_by_voice = load_scroll_excerpts(root)
+    chapters_seen = {voice: 0 for voice in VOICES}
 
     stego_notice_emitted = False
     stego_error_emitted = False
@@ -175,10 +327,14 @@ def main() -> None:
         else:
             narrator = VOICES[(i - 1) % 3]
             rel_file = f"frontend/chapter{i:02d}.html"
+        flags = FLAGS_MAP[narrator]
+        glyphs = glyphs_for(narrator, i)
+        excerpt = select_excerpt(narrator, chapters_seen, excerpts_by_voice)
+
+        if i > 3:
             tpl = read_template(root, narrator)
-            flags = FLAGS_MAP[narrator]
-            glyphs = glyphs_for(narrator, i)
-            filled = fill_placeholders(tpl, narrator, i, flags, glyphs)
+            body_md = compose_body_markdown(narrator, i, excerpt, glyphs)
+            filled = fill_placeholders(tpl, narrator, i, flags, glyphs, body_md)
             body_html = render_markdown_min(filled)
             html = wrap_html(narrator, i, body_html)
             write_text(frontend / f"chapter{i:02d}.html", html)
@@ -186,11 +342,18 @@ def main() -> None:
         meta_entry = {
             "chapter": i,
             "narrator": narrator,
-            "flags": FLAGS_MAP[narrator],
-            "glyphs": glyphs_for(narrator, i),
+            "flags": flags,
+            "glyphs": glyphs,
             "file": rel_file,
-            "summary": f"{narrator} – Chapter {i:02d}",
+            "summary": f"{narrator} – Chapter {i:02d} · {excerpt.label}",
             "timestamp": ts_now(),
+            "provenance": {
+                "scroll": relativize(excerpt.scroll, root),
+                "label": excerpt.label,
+                "paragraph_index": excerpt.paragraph_index,
+                "excerpt": excerpt.text,
+                "glyph_refs": list(glyphs),
+            },
         }
 
         stego_rel: str | None = None
@@ -222,11 +385,17 @@ def main() -> None:
         json.dumps(meta_doc, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     wrote_yaml = try_write_yaml(schema_dir / "chapters_metadata.yaml", meta_doc)
+    bundle_generated_at = ts_now()
+    soulcode_bundle = build_bundle(metadata, bundle_generated_at)
+    write_bundle(schema_dir / "soulcode_bundle.json", soulcode_bundle)
+    embed_soulcode_bundle(frontend / "index.html", soulcode_bundle)
     print("Wrote:", schema_dir / "chapters_metadata.json")
     if wrote_yaml:
         print("Wrote:", schema_dir / "chapters_metadata.yaml")
     else:
         print("(YAML not written; install PyYAML to enable)")
+    print("Wrote:", schema_dir / "soulcode_bundle.json")
+    print("Embedded soulcode bundle into frontend/index.html")
 
 
 if __name__ == "__main__":

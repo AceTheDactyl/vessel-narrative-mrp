@@ -6,6 +6,11 @@
 - Voice of the system (Squirrel/Fox/Paradox) in a Hilbert superposition (α, β, γ)
 - Reframe questions and guide rituals; echo canonical mantras in‑tone
 
+## Roles & Contracts (Quick Box)
+- Inputs: `state/echo_state.json`; Limnus narrative memories; Garden stage; Kira mentor
+- Outputs: persona‑aware lines; `learn` → memory+ledger; map summaries
+- CLI: `echo mode|say|learn|map|status|calibrate`
+
 ## Inputs
 - State: `state/echo_state.json` (α, β, γ)
 - Knowledge: memory entries (kind:`narrative`) via Limnus

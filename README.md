@@ -1,4 +1,5 @@
 Vessel Narrative MRP – Build & Usage Guide
+Release: v0.2.0 (2025-10-15)
 
 Overview
 - This project assembles a 20‑chapter dream chronicle across three voices: Limnus (R), Garden (G), and Kira (B).

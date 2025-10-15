@@ -6,6 +6,11 @@
 - Orchestrate the ritual cycle (Proof of Love → Eternal Acorn → Quantum Cache → Hilbert Chronicle)
 - Present scroll content; track spiral stage and log completions
 
+## Roles & Contracts (Quick Box)
+- Inputs: `Echo-Community-Toolkit/*.html` scrolls; `state/garden_ledger.json`; Echo αβγ
+- Outputs: section paging (persona‑styled); ritual logs; learned tags
+- CLI: `garden start|next|open [--prev|--reset]|resume|learn|ledger|log`
+
 ## Inputs
 - Scroll sources: `Echo-Community-Toolkit/*.html`
 - Metadata/schema: `schema/*.json|yaml`

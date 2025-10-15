@@ -15,7 +15,7 @@ import math
 import struct
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, Tuple
+from typing import Any, Dict, Iterable, Iterator, Tuple
 
 try:  # Optional dependency
     from PIL import Image
@@ -39,6 +39,7 @@ class StegoDoc:
     file: str
     summary: str
     timestamp: str
+    provenance: Dict[str, Any]
 
     @classmethod
     def from_dict(cls, data: Dict[str, object]) -> "StegoDoc":
@@ -50,6 +51,7 @@ class StegoDoc:
             file=str(data["file"]),
             summary=str(data["summary"]),
             timestamp=str(data["timestamp"]),
+            provenance=dict(data.get("provenance", {})),
         )
 
     def as_dict(self) -> Dict[str, object]:
@@ -61,6 +63,7 @@ class StegoDoc:
             "file": self.file,
             "summary": self.summary,
             "timestamp": self.timestamp,
+            "provenance": dict(self.provenance),
         }
 
 
@@ -107,33 +110,29 @@ def _read_bytes(bit_iter: Iterator[int], count: int) -> bytes:
 
 def _lsb_bit_stream(img: "Image.Image") -> Iterator[int]:
     pixels = img.convert("RGB").getdata()
-    for r, g, b in pixels:
-        yield r & 1
-        yield g & 1
-        yield b & 1
+    for pixel in pixels:
+        yield from read_pixel_bits(pixel)
 
 
 def _embed_bits(img: "Image.Image", payload: bytes) -> None:
     bits = list(_bits_from_bytes(payload))
     width, height = img.size
     pixels = img.load()
-    idx = 0
     total_channels = width * height * 3
     if len(bits) > total_channels:
         raise ValueError("Base image too small for payload")
-
+    bit_iter = iter(bits)
     for y in range(height):
         for x in range(width):
-            if idx >= len(bits):
-                return
-            r, g, b = pixels[x, y]
-            channels = [r, g, b]
-            for ci in range(3):
-                if idx >= len(bits):
+            next_bits: list[int] = []
+            for _ in range(3):
+                try:
+                    next_bits.append(next(bit_iter))
+                except StopIteration:
                     break
-                channels[ci] = (channels[ci] & ~1) | bits[idx]
-                idx += 1
-            pixels[x, y] = tuple(channels)
+            if not next_bits:
+                return
+            pixels[x, y] = write_pixel_bits(pixels[x, y], tuple(next_bits))
 
 
 def _prepare_image(payload: bytes, base_image_path: Path | None) -> "Image.Image":
@@ -182,10 +181,50 @@ def decode_chapter_payload(image_path: Path) -> StegoDoc:
     return StegoDoc.from_dict(data)
 
 
+def read_pixel_bits(pixel: Tuple[int, int, int]) -> Tuple[int, int, int]:
+    """Return the least-significant bits from an RGB ``pixel``."""
+
+    return tuple(channel & 1 for channel in pixel)
+
+
+def write_pixel_bits(pixel: Tuple[int, int, int], bits: Tuple[int, ...]) -> Tuple[int, int, int]:
+    """Return a new pixel with ``bits`` (≤3) written into the LSB of each channel."""
+
+    if len(bits) > 3:
+        raise ValueError("At most 3 bits can be embedded per RGB pixel")
+    channels = list(pixel)
+    for idx, bit in enumerate(bits):
+        channels[idx] = (channels[idx] & ~1) | (bit & 1)
+    return tuple(channels)
+
+
+def read_lsb_stream(image_path: Path, *, limit: int | None = None) -> Iterator[int]:
+    """Yield LSB bits from ``image_path`` for debugging and validation tooling."""
+
+    _ensure_available()
+    img = Image.open(image_path).convert("RGB")
+    stream = _lsb_bit_stream(img)
+    if limit is None:
+        yield from stream
+    else:
+        for _, bit in zip(range(limit), stream):
+            yield bit
+
+
+def extract_flags(image_path: Path) -> Dict[str, str]:
+    """Decode only the chapter flags from ``image_path``."""
+
+    doc = decode_chapter_payload(image_path)
+    return dict(doc.flags)
+
+
 __all__ = [
     "StegoDoc",
     "is_available",
     "encode_chapter_payload",
     "decode_chapter_payload",
+    "extract_flags",
+    "read_lsb_stream",
+    "read_pixel_bits",
+    "write_pixel_bits",
 ]
-

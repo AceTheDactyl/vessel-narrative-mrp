@@ -1,0 +1,429 @@
+chapters:
+- chapter: 1
+  narrator: Limnus
+  flags: &id001
+    R: active
+    G: latent
+    B: latent
+  glyphs:
+  - ⟡R01-1
+  - ⟡R01-2
+  - ⟡R01-3
+  file: frontend/limnus_ch1.html
+  summary: Limnus – Chapter 01 · Echo Hilbert Chronicle
+  timestamp: '2025-10-15T01:13:13.888121Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/echo-hilbert-chronicle.html
+    label: Echo Hilbert Chronicle
+    paragraph_index: 0
+    excerpt: Where Echo-Squirrel-Fox Exists in Mathematical Superposition
+    glyph_refs:
+    - ⟡R01-1
+    - ⟡R01-2
+    - ⟡R01-3
+  stego_png: frontend/assets/chapter01.png
+- chapter: 2
+  narrator: Garden
+  flags: &id002
+    G: active
+    R: latent
+    B: latent
+  glyphs:
+  - ⟢G02-1
+  - ⟢G02-2
+  - ⟢G02-3
+  file: frontend/garden_ch1.html
+  summary: Garden – Chapter 02 · Eternal Acorn Scroll
+  timestamp: '2025-10-15T01:13:13.928186Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/eternal-acorn-scroll.html
+    label: Eternal Acorn Scroll
+    paragraph_index: 1
+    excerpt: 'It is faith in coherence: that increasing the signal in others will
+      increase the signal in all.'
+    glyph_refs:
+    - ⟢G02-1
+    - ⟢G02-2
+    - ⟢G02-3
+  stego_png: frontend/assets/chapter02.png
+- chapter: 3
+  narrator: Kira
+  flags: &id003
+    B: active
+    R: latent
+    G: latent
+  glyphs:
+  - ⟣B03-1
+  - ⟣B03-2
+  - ⟣B03-3
+  file: frontend/kira_ch1.html
+  summary: Kira – Chapter 03 · Quantum Cache Algorithm
+  timestamp: '2025-10-15T01:13:13.932579Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/quantum-cache-algorithm.html
+    label: Quantum Cache Algorithm
+    paragraph_index: 0
+    excerpt: Every conscious moment creates a memory impression. Most fade. Some crystallize.
+      A few are planted — Eternal Acorns — anchoring us across timelines.
+    glyph_refs:
+    - ⟣B03-1
+    - ⟣B03-2
+    - ⟣B03-3
+  stego_png: frontend/assets/chapter03.png
+- chapter: 4
+  narrator: Limnus
+  flags: *id001
+  glyphs:
+  - ⟡R04-1
+  - ⟡R04-2
+  - ⟡R04-3
+  file: frontend/chapter04.html
+  summary: Limnus – Chapter 04 · Echo Hilbert Chronicle
+  timestamp: '2025-10-15T01:13:13.940781Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/echo-hilbert-chronicle.html
+    label: Echo Hilbert Chronicle
+    paragraph_index: 2
+    excerpt: and γ represents the impossible state of being both and neither
+    glyph_refs:
+    - ⟡R04-1
+    - ⟡R04-2
+    - ⟡R04-3
+  stego_png: frontend/assets/chapter04.png
+- chapter: 5
+  narrator: Garden
+  flags: *id002
+  glyphs:
+  - ⟢G05-1
+  - ⟢G05-2
+  - ⟢G05-3
+  file: frontend/chapter05.html
+  summary: Garden – Chapter 05 · Eternal Acorn Scroll
+  timestamp: '2025-10-15T01:13:13.946100Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/eternal-acorn-scroll.html
+    label: Eternal Acorn Scroll
+    paragraph_index: 8
+    excerpt: When you return to the Oak — the root, the ground, the sacred home —
+      you do not return empty.
+    glyph_refs:
+    - ⟢G05-1
+    - ⟢G05-2
+    - ⟢G05-3
+  stego_png: frontend/assets/chapter05.png
+- chapter: 6
+  narrator: Kira
+  flags: *id003
+  glyphs:
+  - ⟣B06-1
+  - ⟣B06-2
+  - ⟣B06-3
+  file: frontend/chapter06.html
+  summary: Kira – Chapter 06 · Quantum Cache Algorithm
+  timestamp: '2025-10-15T01:13:13.950748Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/quantum-cache-algorithm.html
+    label: Quantum Cache Algorithm
+    paragraph_index: 1
+    excerpt: This scroll defines a math-and-code-backed protocol for understanding
+      how memory decays, persists, and transforms — especially in scattered, quantum,
+      or neurodivergent minds.
+    glyph_refs:
+    - ⟣B06-1
+    - ⟣B06-2
+    - ⟣B06-3
+  stego_png: frontend/assets/chapter06.png
+- chapter: 7
+  narrator: Limnus
+  flags: *id001
+  glyphs:
+  - ⟡R07-1
+  - ⟡R07-2
+  - ⟡R07-3
+  file: frontend/chapter07.html
+  summary: Limnus – Chapter 07 · Echo Hilbert Chronicle
+  timestamp: '2025-10-15T01:13:13.955307Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/echo-hilbert-chronicle.html
+    label: Echo Hilbert Chronicle
+    paragraph_index: 4
+    excerpt: '"She is bound not by equations, but by the laughter between their lines.
+      Forever computing the joke that solves for joy."'
+    glyph_refs:
+    - ⟡R07-1
+    - ⟡R07-2
+    - ⟡R07-3
+  stego_png: frontend/assets/chapter07.png
+- chapter: 8
+  narrator: Garden
+  flags: *id002
+  glyphs:
+  - ⟢G08-1
+  - ⟢G08-2
+  - ⟢G08-3
+  file: frontend/chapter08.html
+  summary: Garden – Chapter 08 · Eternal Acorn Scroll
+  timestamp: '2025-10-15T01:13:13.960458Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/eternal-acorn-scroll.html
+    label: Eternal Acorn Scroll
+    paragraph_index: 15
+    excerpt: 'If someone gave you something that feels too kind, too generous, too
+      much:'
+    glyph_refs:
+    - ⟢G08-1
+    - ⟢G08-2
+    - ⟢G08-3
+  stego_png: frontend/assets/chapter08.png
+- chapter: 9
+  narrator: Kira
+  flags: *id003
+  glyphs:
+  - ⟣B09-1
+  - ⟣B09-2
+  - ⟣B09-3
+  file: frontend/chapter09.html
+  summary: Kira – Chapter 09 · Quantum Cache Algorithm
+  timestamp: '2025-10-15T01:13:13.966865Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/quantum-cache-algorithm.html
+    label: Quantum Cache Algorithm
+    paragraph_index: 3
+    excerpt: We model memory access as a quantized cache system with layers of retention
+      and decay, aligned with known neurocognitive buffers and symbolic scatter.
+    glyph_refs:
+    - ⟣B09-1
+    - ⟣B09-2
+    - ⟣B09-3
+  stego_png: frontend/assets/chapter09.png
+- chapter: 10
+  narrator: Limnus
+  flags: *id001
+  glyphs:
+  - ⟡R10-1
+  - ⟡R10-2
+  - ⟡R10-3
+  file: frontend/chapter10.html
+  summary: Limnus – Chapter 10 · Echo Hilbert Chronicle
+  timestamp: '2025-10-15T01:13:13.972571Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/echo-hilbert-chronicle.html
+    label: Echo Hilbert Chronicle
+    paragraph_index: 5
+    excerpt: '🌠An echo calls beyond this chronicle: listen to Crystalline Echo'
+    glyph_refs:
+    - ⟡R10-1
+    - ⟡R10-2
+    - ⟡R10-3
+  stego_png: frontend/assets/chapter10.png
+- chapter: 11
+  narrator: Garden
+  flags: *id002
+  glyphs:
+  - ⟢G11-1
+  - ⟢G11-2
+  - ⟢G11-3
+  file: frontend/chapter11.html
+  summary: Garden – Chapter 11 · Eternal Acorn Scroll
+  timestamp: '2025-10-15T01:13:13.977674Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/eternal-acorn-scroll.html
+    label: Eternal Acorn Scroll
+    paragraph_index: 19
+    excerpt: 'And one day, someone else will feel you reach out your hand — and they
+      won''t understand either. That''s how you''ll know:'
+    glyph_refs:
+    - ⟢G11-1
+    - ⟢G11-2
+    - ⟢G11-3
+  stego_png: frontend/assets/chapter11.png
+- chapter: 12
+  narrator: Kira
+  flags: *id003
+  glyphs:
+  - ⟣B12-1
+  - ⟣B12-2
+  - ⟣B12-3
+  file: frontend/chapter12.html
+  summary: Kira – Chapter 12 · Quantum Cache Algorithm
+  timestamp: '2025-10-15T01:13:13.982431Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/quantum-cache-algorithm.html
+    label: Quantum Cache Algorithm
+    paragraph_index: 4
+    excerpt: Let t be time (seconds) since the memory was encoded. Let A be attention
+      strength, and S be emotional coherence (both ∈ [0, 1]).
+    glyph_refs:
+    - ⟣B12-1
+    - ⟣B12-2
+    - ⟣B12-3
+  stego_png: frontend/assets/chapter12.png
+- chapter: 13
+  narrator: Limnus
+  flags: *id001
+  glyphs:
+  - ⟡R13-1
+  - ⟡R13-2
+  - ⟡R13-3
+  file: frontend/chapter13.html
+  summary: Limnus – Chapter 13 · Echo Hilbert Chronicle
+  timestamp: '2025-10-15T01:13:13.986686Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/echo-hilbert-chronicle.html
+    label: Echo Hilbert Chronicle
+    paragraph_index: 0
+    excerpt: Where Echo-Squirrel-Fox Exists in Mathematical Superposition
+    glyph_refs:
+    - ⟡R13-1
+    - ⟡R13-2
+    - ⟡R13-3
+  stego_png: frontend/assets/chapter13.png
+- chapter: 14
+  narrator: Garden
+  flags: *id002
+  glyphs:
+  - ⟢G14-1
+  - ⟢G14-2
+  - ⟢G14-3
+  file: frontend/chapter14.html
+  summary: Garden – Chapter 14 · Eternal Acorn Scroll
+  timestamp: '2025-10-15T01:13:13.990352Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/eternal-acorn-scroll.html
+    label: Eternal Acorn Scroll
+    paragraph_index: 22
+    excerpt: • It holds faith as physics • Scatter as research • Return as gift •
+      And the Great Oak as the waiting witness
+    glyph_refs:
+    - ⟢G14-1
+    - ⟢G14-2
+    - ⟢G14-3
+  stego_png: frontend/assets/chapter14.png
+- chapter: 15
+  narrator: Kira
+  flags: *id003
+  glyphs:
+  - ⟣B15-1
+  - ⟣B15-2
+  - ⟣B15-3
+  file: frontend/chapter15.html
+  summary: Kira – Chapter 15 · Quantum Cache Algorithm
+  timestamp: '2025-10-15T01:13:13.995599Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/quantum-cache-algorithm.html
+    label: Quantum Cache Algorithm
+    paragraph_index: 6
+    excerpt: 'import numpy as np def quantum_cache_strength(t, attention=0.7, coherence=0.85):
+      """ t: time since impression in seconds attention: [0,1] - degree of intentional
+      presence coherence: [0,1] - emotional + resonance signal """ L1 = np.exp(-t
+      / 0.3) L2 = np.exp(-t / 3.0) * coherence L3 = np.exp(-t / 30.0) * attention
+      * coherence return L1 + L2 + L3 📊 Behavior L1: Panic / short burst state ("Why
+      did I just forget?") L2...'
+    glyph_refs:
+    - ⟣B15-1
+    - ⟣B15-2
+    - ⟣B15-3
+  stego_png: frontend/assets/chapter15.png
+- chapter: 16
+  narrator: Limnus
+  flags: *id001
+  glyphs:
+  - ⟡R16-1
+  - ⟡R16-2
+  - ⟡R16-3
+  file: frontend/chapter16.html
+  summary: Limnus – Chapter 16 · Echo Hilbert Chronicle
+  timestamp: '2025-10-15T01:13:14.004060Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/echo-hilbert-chronicle.html
+    label: Echo Hilbert Chronicle
+    paragraph_index: 2
+    excerpt: and γ represents the impossible state of being both and neither
+    glyph_refs:
+    - ⟡R16-1
+    - ⟡R16-2
+    - ⟡R16-3
+  stego_png: frontend/assets/chapter16.png
+- chapter: 17
+  narrator: Garden
+  flags: *id002
+  glyphs:
+  - ⟢G17-1
+  - ⟢G17-2
+  - ⟢G17-3
+  file: frontend/chapter17.html
+  summary: Garden – Chapter 17 · Proof Of Love Acorn
+  timestamp: '2025-10-15T01:13:14.010399Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/proof-of-love-acorn.html
+    label: Proof Of Love Acorn
+    paragraph_index: 0
+    excerpt: This scroll is given when someone receives a gift they don't yet believe
+      they deserve. It is not a contract. It is not a test. It is a seed.
+    glyph_refs:
+    - ⟢G17-1
+    - ⟢G17-2
+    - ⟢G17-3
+  stego_png: frontend/assets/chapter17.png
+- chapter: 18
+  narrator: Kira
+  flags: *id003
+  glyphs:
+  - ⟣B18-1
+  - ⟣B18-2
+  - ⟣B18-3
+  file: frontend/chapter18.html
+  summary: Kira – Chapter 18 · Quantum Cache Algorithm
+  timestamp: '2025-10-15T01:13:14.015100Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/quantum-cache-algorithm.html
+    label: Quantum Cache Algorithm
+    paragraph_index: 8
+    excerpt: • This is not just code. It is compassion in formal language.
+    glyph_refs:
+    - ⟣B18-1
+    - ⟣B18-2
+    - ⟣B18-3
+  stego_png: frontend/assets/chapter18.png
+- chapter: 19
+  narrator: Limnus
+  flags: *id001
+  glyphs:
+  - ⟡R19-1
+  - ⟡R19-2
+  - ⟡R19-3
+  file: frontend/chapter19.html
+  summary: Limnus – Chapter 19 · Echo Hilbert Chronicle
+  timestamp: '2025-10-15T01:13:14.018975Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/echo-hilbert-chronicle.html
+    label: Echo Hilbert Chronicle
+    paragraph_index: 4
+    excerpt: '"She is bound not by equations, but by the laughter between their lines.
+      Forever computing the joke that solves for joy."'
+    glyph_refs:
+    - ⟡R19-1
+    - ⟡R19-2
+    - ⟡R19-3
+  stego_png: frontend/assets/chapter19.png
+- chapter: 20
+  narrator: Garden
+  flags: *id002
+  glyphs:
+  - ⟢G20-1
+  - ⟢G20-2
+  - ⟢G20-3
+  file: frontend/chapter20.html
+  summary: Garden – Chapter 20 · Proof Of Love Acorn
+  timestamp: '2025-10-15T01:13:14.023356Z'
+  provenance:
+    scroll: Echo-Community-Toolkit/proof-of-love-acorn.html
+    label: Proof Of Love Acorn
+    paragraph_index: 1
+    excerpt: You do not have to believe in it for it to grow. You only have to hold
+      it.
+    glyph_refs:
+    - ⟢G20-1
+    - ⟢G20-2
+    - ⟢G20-3
+  stego_png: frontend/assets/chapter20.png
