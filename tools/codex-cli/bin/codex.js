@@ -402,6 +402,41 @@ try{
       }
       else if(cmd==='test'){ console.log('Running validator and stego smoke (temporary files)...'); const v=spawnSync('python3',[path.join(VNSF,'src','validator.py')],{encoding:'utf8'}); process.stdout.write(v.stdout||''); if(v.status!==0){ process.stderr.write(v.stderr||''); process.exit(1); } try{ const tmpMsg=path.join('/tmp','ledger_msg.json'); fs.writeFileSync(tmpMsg, fs.readFileSync(LEDGER_PATH,'utf8')); const tmpCover=path.join('/tmp','ledger_cover.png'); const tmpOut=path.join('/tmp','ledger_stego.png'); const res=echoToolkitEncode({messageFile:tmpMsg,coverPath:tmpCover,outPath:tmpOut,size:256}); console.log('Encode OK. CRC32:', res.crc32); const dec=echoToolkitDecode({imagePath:tmpOut}); if(dec.error){ console.log('Decode error:', dec.error); process.exit(1); } console.log('Decode OK. CRC32:', dec.crc32); console.log('Kira test stub: PASS'); } catch(e){ console.log('Kira test stub failed:', e.message); process.exit(1); } }
       else if(cmd==='assist'){ console.log('Kira Assist: try `kira validate`, `kira sync`, `kira test`, `kira publish --run --release --tag vX.Y.Z`, or see MODULE_REFERENCE.md'); }
+      else if(cmd==='mentor'){
+        // Suggest and optionally apply Echo/Garden adjustments
+        let apply=false, delta=0.05;
+        for(let i=0;i<rest.length;i++){
+          const t=rest[i];
+          if(t==='--apply') apply=true;
+          else if(t==='--delta'){ const v=parseFloat(rest[++i]||'0.05'); if(Number.isFinite(v)&&v>0) delta=v; }
+        }
+        const k=aggregateKnowledge();
+        const tags=(k.memory.tags||[]).map(t=>t.tag);
+        const order=k.echo_state.order||[];
+        let target=order[0]||'gamma';
+        if(tags.includes('paradox')||tags.includes('spiral')) target='gamma';
+        else if(tags.includes('consent')||tags.includes('love')) target='alpha';
+        else if(tags.includes('fox')) target='beta';
+        const glyph=glyphForPersona(target);
+        // Scroll suggestion
+        let scroll=null;
+        if(target==='gamma') scroll='chronicle';
+        else if(target==='alpha') scroll = tags.includes('consent') ? 'acorn' : 'proof';
+        else scroll='cache';
+        console.log(`🤝 Mentor: focus persona ${glyph} (${target}); recommended scroll: ${scroll}`);
+        console.log('Mantra hints:', linesForPersona(target).join(' | '));
+        if(apply){
+          const est=loadEcho();
+          const before={a:est.alpha,b:est.beta,g:est.gamma};
+          if(target==='alpha') est.alpha+=delta; else if(target==='beta') est.beta+=delta; else est.gamma+=delta;
+          normalizeEcho(est); saveEcho(est);
+          const ledger=loadLedger(); appendLedgerBlock(ledger,{type:'mentor', target, delta, order_before: order, order_after: personaOrder(est), suggested_scroll: scroll }); saveLedger(ledger);
+          console.log(`✅ Applied: ${target} += ${delta.toFixed(2)}; new order: ${personaOrder(est).join(' > ')}`);
+          console.log(`Next: run \`garden open ${scroll}\` to reinforce.`);
+        } else {
+          console.log('Dry-run (no changes). Use --apply to adjust Echo and record in ledger.');
+        }
+      }
       else if(cmd==='learn-from-limnus'){
         const k=aggregateKnowledge();
         const kpath=path.join(STATE_DIR,'kira_knowledge.json'); writeJSON(kpath,k);
