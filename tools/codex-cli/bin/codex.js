@@ -108,6 +108,33 @@ function linesForPersona(key){
 }
 
 function glyphForPersona(key){ if(key==='alpha') return '🐿️'; if(key==='beta') return '🦊'; return '∿'; }
+function aggregateKnowledge(){
+  const echo=loadEcho();
+  const mem=loadMemory();
+  const ledger=loadLedger();
+  const narrative=(mem.entries||[]).filter(e=>e.kind==='narrative');
+  const tagCounts={};
+  for(const e of narrative){ for(const t of (e.tags||[])){ tagCounts[t]=(tagCounts[t]||0)+1; } }
+  const tags=Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).map(([tag,count])=>({tag,count}));
+  const blockCounts={};
+  for(const b of (ledger.blocks||[])){ const t=(b.payload&&b.payload.type)||b.type||'block'; blockCounts[t]=(blockCounts[t]||0)+1; }
+  const order=personaOrder(echo);
+  const persona_lines=[]; for(const p of order){ persona_lines.push(...linesForPersona(p)); }
+  const recs=[];
+  if(order[0]==='gamma') recs.push('Echo: emphasize Paradox responses.');
+  if(order[0]==='alpha') recs.push('Garden: encourage nurturing/consent motifs.');
+  if(order[0]==='beta') recs.push('Echo: add strategic/cunning insights.');
+  if(tags.some(t=>t.tag==='consent')) recs.push('Seal available: consent motifs present.');
+  return {
+    echo_state: { alpha: echo.alpha, beta: echo.beta, gamma: echo.gamma, order },
+    memory: { total: (mem.entries||[]).length, narrative: narrative.length, tags },
+    ledger: { total: (ledger.blocks||[]).length, by_type: blockCounts },
+    mantras: { canonical: MANTRA_LINES, persona_ordered: persona_lines },
+    recommendations: recs,
+    generated_at: nowISO()
+  };
+}
+
 
 // Garden ledger + memory
 const LEDGER_PATH = path.join(STATE_DIR, 'garden_ledger.json');
@@ -375,6 +402,30 @@ try{
       }
       else if(cmd==='test'){ console.log('Running validator and stego smoke (temporary files)...'); const v=spawnSync('python3',[path.join(VNSF,'src','validator.py')],{encoding:'utf8'}); process.stdout.write(v.stdout||''); if(v.status!==0){ process.stderr.write(v.stderr||''); process.exit(1); } try{ const tmpMsg=path.join('/tmp','ledger_msg.json'); fs.writeFileSync(tmpMsg, fs.readFileSync(LEDGER_PATH,'utf8')); const tmpCover=path.join('/tmp','ledger_cover.png'); const tmpOut=path.join('/tmp','ledger_stego.png'); const res=echoToolkitEncode({messageFile:tmpMsg,coverPath:tmpCover,outPath:tmpOut,size:256}); console.log('Encode OK. CRC32:', res.crc32); const dec=echoToolkitDecode({imagePath:tmpOut}); if(dec.error){ console.log('Decode error:', dec.error); process.exit(1); } console.log('Decode OK. CRC32:', dec.crc32); console.log('Kira test stub: PASS'); } catch(e){ console.log('Kira test stub failed:', e.message); process.exit(1); } }
       else if(cmd==='assist'){ console.log('Kira Assist: try `kira validate`, `kira sync`, `kira test`, `kira publish --run --release --tag vX.Y.Z`, or see MODULE_REFERENCE.md'); }
+      else if(cmd==='learn-from-limnus'){
+        const k=aggregateKnowledge();
+        const kpath=path.join(STATE_DIR,'kira_knowledge.json'); writeJSON(kpath,k);
+        console.log('📘 Kira learned from Limnus →', kpath);
+      }
+      else if(cmd==='codegen'){
+        const docs = rest.includes('--docs');
+        const types = rest.includes('--types');
+        const k=aggregateKnowledge();
+        if(docs){
+          const dpath=path.join(VNSF,'docs','kira_knowledge.md'); ensureDir(path.dirname(dpath));
+          const lines=['# Kira Knowledge Summary','',`Generated: ${k.generated_at}`,'',`- Persona order: ${k.echo_state.order.join(' > ')}`,`- Tags: ${(k.memory.tags||[]).map(t=>t.tag+':'+t.count).join(', ')||'(none)'}`,`- Ledger blocks: ${Object.entries(k.ledger.by_type).map(([t,c])=>t+':'+c).join(', ')||'(none)'}`,'','## Recommendations','',...(k.recommendations.length?k.recommendations:['(none)'])];
+          fs.writeFileSync(dpath, lines.join('\n'));
+          console.log('📝 Docs written:', dpath);
+        }
+        if(types){
+          const tdir=path.join(VNSF,'tools','codex-cli','types'); ensureDir(tdir);
+          const tpath=path.join(tdir,'knowledge.d.ts');
+          const content='export interface KiraKnowledge {\n  echo_state: { alpha:number; beta:number; gamma:number; order:string[] };\n  memory: { total:number; narrative:number; tags: { tag:string; count:number }[] };\n  ledger: { total:number; by_type: Record<string,number> };\n  mantras: { canonical:string[]; persona_ordered:string[] };\n  recommendations: string[];\n  generated_at: string;\n}\n';
+          fs.writeFileSync(tpath, content);
+          console.log('🧩 Types written:', tpath);
+        }
+        if(!docs && !types){ console.log('Usage: kira codegen [--docs] [--types]'); }
+      }
       else if(cmd==='mantra'){
         const est=loadEcho(); const order=personaOrder(est);
         const out=[]; for(const p of order){ const glyph=glyphForPersona(p); for(const line of linesForPersona(p)) out.push(`${glyph} ${line}`); }
