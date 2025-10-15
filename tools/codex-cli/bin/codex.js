@@ -21,7 +21,7 @@ function readJSON(p, def) { try { return JSON.parse(fs.readFileSync(p, 'utf8'));
 function writeJSON(p, obj) { ensureDir(path.dirname(p)); fs.writeFileSync(p, JSON.stringify(obj, null, 2)); }
 
 function printHelp() {
-  console.log(`Codex CLI\n\nUsage: codex <module> <command> [options]\n\nModules & commands:\n  echo   summon\n         mode <squirrel|fox|paradox|mix>\n         say <message>\n         status\n         calibrate\n\n  garden start\n         next\n         open <scroll>\n         ledger\n         log\n\n  limnus init\n         state\n         update <alpha=..|beta+=..|gamma-=..|decay=N|consolidate=N|cache=\"text\">\n         cache \"text\" [-l L1|L2|L3]\n         recall <keyword> [-l L1|L2|L3] [--since ISO] [--until ISO]\n         memories [--layer L1|L2|L3] [--since ISO] [--until ISO] [--limit N] [--json]\n         export-memories [-o file] [--layer L1|L2|L3] [--since ISO] [--until ISO]\n         import-memories -i file [--replace]\n         export-ledger [-o file]\n         import-ledger -i file [--replace] [--rehash]\n         rehash-ledger [--dry-run] [--file path] [-o out.json]\n         view-ledger [--file path]\n         encode-ledger [-i ledger.json] [--file path] [-c cover.png] [-o out.png] [--size 512]\n         decode-ledger [-i image.png] [--file path]\n         verify-ledger [-i image.png] [--file path] [--digest]\n\n  kira   validate\n         sync\n         setup\n         pull [--run]\n         push [--run] [--message \"...\"]\n         publish [--run]\n         test\n         assist\n`);
+  console.log(`Codex CLI\n\nUsage: codex <module> <command> [options]\n\nModules & commands:\n  echo   summon\n         mode <squirrel|fox|paradox|mix>\n         say <message>\n        map <concept>\n         status\n         calibrate\n\n  garden start\n         next\n         open <scroll>\n         ledger\n         log\n\n  limnus init\n         state\n         update <alpha=..|beta+=..|gamma-=..|decay=N|consolidate=N|cache=\"text\">\n         cache \"text\" [-l L1|L2|L3]\n         recall <keyword> [-l L1|L2|L3] [--since ISO] [--until ISO]\n         memories [--layer L1|L2|L3] [--since ISO] [--until ISO] [--limit N] [--json]\n         export-memories [-o file] [--layer L1|L2|L3] [--since ISO] [--until ISO]\n         import-memories -i file [--replace]\n         export-ledger [-o file]\n         import-ledger -i file [--replace] [--rehash]\n         rehash-ledger [--dry-run] [--file path] [-o out.json]\n         view-ledger [--file path]\n         encode-ledger [-i ledger.json] [--file path] [-c cover.png] [-o out.png] [--size 512]\n         decode-ledger [-i image.png] [--file path]\n         verify-ledger [-i image.png] [--file path] [--digest]\n\n  kira   validate\n         sync\n         setup\n         pull [--run]\n         push [--run] [--message \"...\"]\n         publish [--run]\n         test\n         assist\n`);
 }
 
 // Echo helpers
@@ -159,6 +159,22 @@ try{
       if(cmd==='summon'){ saveEcho({alpha:0.34,beta:0.33,gamma:0.33}); console.log('✨ Echo summoned. "I return as breath."'); }
       else if(cmd==='mode'){ const mode=(rest[0]||'').toLowerCase(); if(mode==='squirrel') Object.assign(state,{alpha:0.7,beta:0.15,gamma:0.15}); else if(mode==='fox') Object.assign(state,{alpha:0.15,beta:0.7,gamma:0.15}); else if(mode==='paradox') Object.assign(state,{alpha:0.15,beta:0.15,gamma:0.7}); else { const {alpha,beta,gamma}=state; Object.assign(state,{alpha:gamma,beta:alpha,gamma:beta}); } saveEcho(state); console.log(`φ∞ state → a=${state.alpha.toFixed(2)} b=${state.beta.toFixed(2)} c=${state.gamma.toFixed(2)} ${echoGlyph(state)}`); }
       else if(cmd==='say'){ const msg=rest.join(' ').trim(); if(!msg){ console.log('Usage: codex echo say <message>'); } else { console.log(personaSay(state,msg)); } }
+      else if(cmd==='map'){
+        const concept=rest.join(' ').trim().toLowerCase();
+        if(!concept){ console.log('Usage: codex echo map <concept>'); break; }
+        const mem=loadMemory();
+        const hits=(mem.entries||[]).filter(e=>{
+          const t=(e.text||'').toLowerCase(); const tags=(e.tags||[]).map(x=>String(x).toLowerCase());
+          return t.includes(concept) || tags.includes(concept);
+        });
+        const tagCounts={};
+        for(const e of hits){ for(const t of (e.tags||[])){ tagCounts[t]=(tagCounts[t]||0)+1; } }
+        const topTags=Object.entries(tagCounts).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k,v])=>`${k}:${v}`);
+        let rec='alpha'; if(/paradox|spiral|together/.test(concept)) rec='gamma'; else if(/fox|cunning|wise|strategy/.test(concept)) rec='beta';
+        const lines=linesForPersona(rec);
+        console.log(`🗺️  ${hits.length} related memories; top tags: ${topTags.join(', ')||'(none)'}`);
+        console.log(`Suggested persona: ${glyphForPersona(rec)}; mantra hints: ${lines.join(' | ')}`);
+      }
       else if(cmd==='status'){ console.log(`Echo status: a=${state.alpha} b=${state.beta} c=${state.gamma} ${echoGlyph(state)}`); }
       else if(cmd==='learn'){
         const txt = rest.join(' ').trim();
