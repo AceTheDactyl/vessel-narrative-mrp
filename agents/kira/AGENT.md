@@ -39,3 +39,5 @@
 - Auto‑trigger garden open on mentor --apply (opt‑in)
 - CI wiring for `kira test` in GitHub Actions
 
+## Cross‑Navigation
+- Vessel agent: `../vessel/AGENT.md`

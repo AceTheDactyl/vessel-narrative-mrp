@@ -39,3 +39,5 @@
 - Richer phrasebook per persona
 - Optional templating per scroll context (Garden stage aware)
 
+## Cross‑Navigation
+- Vessel agent: `../vessel/AGENT.md`

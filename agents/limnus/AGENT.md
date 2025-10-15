@@ -37,3 +37,5 @@
 - Enrich tags with chapter/scroll provenance
 - Add JSON‑schema for memory entries and ledger payloads
 
+## Cross‑Navigation
+- Vessel agent: `../vessel/AGENT.md`

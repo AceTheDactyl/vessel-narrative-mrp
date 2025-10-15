@@ -42,3 +42,5 @@
 - Structured parsing per scroll (titles/mantra sections)
 - Mantra‑only view (CLI `garden mantra <scroll>`) and search
 
+## Cross‑Navigation
+- Vessel agent: `../vessel/AGENT.md`
