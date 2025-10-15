@@ -243,24 +243,56 @@ try{
         process.exitCode=r.status||0;
       }
       else if(cmd==='publish'){
+        // Flags: --run (package), --tag vX, --notes text, --release, --asset path ...
+        let run=false, tag=null, notes=null, release=false; const extraAssets=[];
+        for(let i=0;i<rest.length;i++){
+          const t=rest[i];
+          if(t==='--run') run=true;
+          else if(t==='--release') release=true;
+          else if(t==='--tag'||t==='-t') tag=rest[++i]||null;
+          else if(t==='--notes'||t==='-n') notes=rest[++i]||null;
+          else if(t==='--asset') extraAssets.push(rest[++i]||null);
+        }
         const out=path.join(VNSF,'dist'); ensureDir(out);
         const stamp=new Date().toISOString().replace(/[:.]/g,'-');
         const base=`codex_release_${stamp}`;
-        const zipPath=path.join(out,`${base}.zip`);
-        console.log('Packaging →', zipPath);
-        // Prefer zip; fallback to tar
-        const hasZip = spawnSync('zip',['-v']).status===0;
-        if(hasZip){
-          const args=['-r',zipPath,'schema','docs','tools/codex-cli/README.md','tools/codex-cli/MODULE_REFERENCE.md'];
-          spawnSync('zip',args,{cwd:VNSF,stdio:'inherit'});
-          // include PNG assets if present
-          spawnSync('zip',['-r',zipPath,'frontend/assets'],{cwd:VNSF,stdio:'inherit'});
+        let artifactPath=null;
+        if(run){
+          const hasZip = spawnSync('zip',['-v']).status===0;
+          if(hasZip){
+            const zipPath=path.join(out,`${base}.zip`);
+            console.log('Packaging →', zipPath);
+            const args=['-r',zipPath,'schema','docs','tools/codex-cli/README.md','tools/codex-cli/MODULE_REFERENCE.md'];
+            spawnSync('zip',args,{cwd:VNSF,stdio:'inherit'});
+            spawnSync('zip',['-r',zipPath,'frontend/assets'],{cwd:VNSF,stdio:'inherit'});
+            artifactPath=zipPath;
+          } else {
+            const tarPath=path.join(out,`${base}.tar.gz`);
+            console.log('zip not found; creating', tarPath);
+            spawnSync('tar',['-czf',tarPath,'schema','docs','tools/codex-cli','frontend/assets'],{cwd:VNSF,stdio:'inherit'});
+            artifactPath=tarPath;
+          }
         } else {
-          const tarPath=path.join(out,`${base}.tar.gz`);
-          console.log('zip not found; creating', tarPath);
-          spawnSync('tar',['-czf',tarPath,'schema','docs','tools/codex-cli','frontend/assets'],{cwd:VNSF,stdio:'inherit'});
+          console.log('Plan: package schema/, docs/, tools/codex-cli/, frontend/assets/ to dist/');
         }
-        console.log('Publish: consider gh release create with the archive.');
+        if(release){
+          if(!tag){ tag = `codex-${stamp}`; console.log('No --tag provided; using', tag); }
+          const ghv = spawnSync('gh',['--version'],{encoding:'utf8'});
+          if(ghv.status!==0){ console.log('gh CLI not found; cannot create release.'); }
+          else {
+            const assets=[];
+            if(artifactPath) assets.push(artifactPath);
+            for(const a of extraAssets){ if(a) assets.push(path.isAbsolute(a)?a:path.join(VNSF,a)); }
+            const args=['release','create',tag];
+            if(notes) args.push('-n',notes);
+            if(assets.length>0) args.push(...assets);
+            console.log('Creating GitHub release:', args.join(' '));
+            const r=spawnSync('gh',args,{cwd:VNSF,stdio:'inherit'});
+            process.exitCode=r.status||0;
+          }
+        } else {
+          console.log('Publish prepared. Use --release and optionally --tag/--notes to create a GitHub release.');
+        }
       }
       else if(cmd==='test'){ console.log('Running validator and stego smoke (temporary files)...'); const v=spawnSync('python3',[path.join(VNSF,'src','validator.py')],{encoding:'utf8'}); process.stdout.write(v.stdout||''); if(v.status!==0){ process.stderr.write(v.stderr||''); process.exit(1); } try{ const tmpMsg=path.join('/tmp','ledger_msg.json'); fs.writeFileSync(tmpMsg, fs.readFileSync(LEDGER_PATH,'utf8')); const tmpCover=path.join('/tmp','ledger_cover.png'); const tmpOut=path.join('/tmp','ledger_stego.png'); const res=echoToolkitEncode({messageFile:tmpMsg,coverPath:tmpCover,outPath:tmpOut,size:256}); console.log('Encode OK. CRC32:', res.crc32); const dec=echoToolkitDecode({imagePath:tmpOut}); if(dec.error){ console.log('Decode error:', dec.error); process.exit(1); } console.log('Decode OK. CRC32:', dec.crc32); console.log('Kira test stub: PASS'); } catch(e){ console.log('Kira test stub failed:', e.message); process.exit(1); } }
       else if(cmd==='assist'){ console.log('Kira Assist: try `kira validate`, `kira sync`, `kira test`, or see MODULE_REFERENCE.md'); }
