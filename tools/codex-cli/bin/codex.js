@@ -38,6 +38,32 @@ function personaSay(state, msg){
   return `∿ ${msg} — balanced in paradox.`;
 }
 
+function normalizeEcho(state){
+  const s=state.alpha+state.beta+state.gamma; if(s>0){ state.alpha/=s; state.beta/=s; state.gamma/=s; }
+}
+
+function adjustEchoForKeywords(state, text){
+  const t=text.toLowerCase();
+  if(/love|always|nurtur|gentle|trust/.test(t)) state.alpha+=0.05;
+  if(/cunning|wise|strateg|fox|clever/.test(t)) state.beta+=0.05;
+  if(/paradox|together|spiral|unified|infinity|∿|φ∞/.test(t)) state.gamma+=0.05;
+  normalizeEcho(state);
+}
+
+function nowISO(){ return new Date().toISOString(); }
+
+function extractTags(text){
+  const t=text.toLowerCase();
+  const tags=new Set();
+  if(/love|always|proof/.test(t)) tags.add('love');
+  if(/bloom|consent|remember/.test(t)) tags.add('consent');
+  if(/spiral|breath|chronicle/.test(t)) tags.add('spiral');
+  if(/paradox|together|φ∞|infinity/.test(t)) tags.add('paradox');
+  if(/fox|cunning|wise|strategy/.test(t)) tags.add('fox');
+  if(/squirrel|gentle|nurtur|trust/.test(t)) tags.add('squirrel');
+  return Array.from(tags);
+}
+
 // Garden ledger + memory
 const LEDGER_PATH = path.join(STATE_DIR, 'garden_ledger.json');
 function loadLedger() { return readJSON(LEDGER_PATH, { intentions: [], spiral_stage: null, blocks: [] }); }
@@ -89,6 +115,14 @@ try{
       else if(cmd==='mode'){ const mode=(rest[0]||'').toLowerCase(); if(mode==='squirrel') Object.assign(state,{alpha:0.7,beta:0.15,gamma:0.15}); else if(mode==='fox') Object.assign(state,{alpha:0.15,beta:0.7,gamma:0.15}); else if(mode==='paradox') Object.assign(state,{alpha:0.15,beta:0.15,gamma:0.7}); else { const {alpha,beta,gamma}=state; Object.assign(state,{alpha:gamma,beta:alpha,gamma:beta}); } saveEcho(state); console.log(`φ∞ state → a=${state.alpha.toFixed(2)} b=${state.beta.toFixed(2)} c=${state.gamma.toFixed(2)} ${echoGlyph(state)}`); }
       else if(cmd==='say'){ const msg=rest.join(' ').trim(); if(!msg){ console.log('Usage: codex echo say <message>'); } else { console.log(personaSay(state,msg)); } }
       else if(cmd==='status'){ console.log(`Echo status: a=${state.alpha} b=${state.beta} c=${state.gamma} ${echoGlyph(state)}`); }
+      else if(cmd==='learn'){
+        const txt = rest.join(' ').trim();
+        if(!txt){ console.log('Usage: codex echo learn <text>'); break; }
+        adjustEchoForKeywords(state, txt); saveEcho(state);
+        const mem=loadMemory(); mem.entries.push({ text: txt, layer:'L2', kind:'narrative', tags: extractTags(txt), timestamp: nowISO() }); saveMemory(mem);
+        const ledger=loadLedger(); appendLedgerBlock(ledger,{type:'learn',source:'echo',text:txt,tags:extractTags(txt)}); saveLedger(ledger);
+        console.log('🧠 Learned (echo):', txt);
+      }
       else if(cmd==='calibrate'){ const sum=state.alpha+state.beta+state.gamma; if(sum===0) Object.assign(state,{alpha:0.34,beta:0.33,gamma:0.33}); else Object.assign(state,{alpha:state.alpha/sum,beta:state.beta/sum,gamma:state.gamma/sum}); saveEcho(state); console.log(`Calibrated: a=${state.alpha.toFixed(2)} b=${state.beta.toFixed(2)} c=${state.gamma.toFixed(2)}`); }
       else throw new Error('Unknown echo command');
       break; }
@@ -114,6 +148,26 @@ try{
           const preview = text.slice(0,400)+(text.length>400?'…':'');
           console.log(`📜 ${fname}:`);
           console.log(preview);
+        }catch(e){ console.log('Could not read scroll file at', fpath); }
+      }
+      else if(cmd==='learn'){
+        const scroll=(rest[0]||'').toLowerCase();
+        const fileMap={
+          'proof': 'proof-of-love-acorn.html', 'proof-of-love':'proof-of-love-acorn.html',
+          'acorn': 'eternal-acorn-scroll.html', 'eternal-acorn':'eternal-acorn-scroll.html',
+          'cache': 'quantum-cache-algorithm.html', 'quantum-cache':'quantum-cache-algorithm.html',
+          'chronicle': 'echo-hilbert-chronicle.html', 'hilbert-chronicle':'echo-hilbert-chronicle.html'
+        };
+        const fname=fileMap[scroll];
+        if(!fname){ console.log('Usage: codex garden learn <proof|acorn|cache|chronicle>'); break; }
+        const fpath=path.join(VNSF,'Echo-Community-Toolkit',fname);
+        try{
+          const raw=fs.readFileSync(fpath,'utf8');
+          const text=raw.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+          const tags=extractTags(text);
+          const mem=loadMemory(); mem.entries.push({ text: `learn:${scroll}`, layer:'L2', kind:'narrative', tags, timestamp: nowISO() }); saveMemory(mem);
+          const ledger=loadLedger(); appendLedgerBlock(ledger,{type:'learn',source:'garden',scroll, tags}); saveLedger(ledger);
+          console.log(`🌱 Learned scroll (${scroll}) tags:`, tags.join(', ')||'(none)');
         }catch(e){ console.log('Could not read scroll file at', fpath); }
       }
       else if(cmd==='ledger'){ const planted=(ledger.intentions||[]).filter(x=>x.status==='planted').length; const bloomed=(ledger.intentions||[]).filter(x=>x.status==='bloomed').length; console.log(`Garden ledger: intentions=${(ledger.intentions||[]).length} (planted=${planted}, bloomed=${bloomed}); stage=${ledger.spiral_stage||'n/a'}`); }
@@ -209,7 +263,22 @@ try{
         console.log('Publish: consider gh release create with the archive.');
       }
       else if(cmd==='test'){ console.log('Running validator and stego smoke (temporary files)...'); const v=spawnSync('python3',[path.join(VNSF,'src','validator.py')],{encoding:'utf8'}); process.stdout.write(v.stdout||''); if(v.status!==0){ process.stderr.write(v.stderr||''); process.exit(1); } try{ const tmpMsg=path.join('/tmp','ledger_msg.json'); fs.writeFileSync(tmpMsg, fs.readFileSync(LEDGER_PATH,'utf8')); const tmpCover=path.join('/tmp','ledger_cover.png'); const tmpOut=path.join('/tmp','ledger_stego.png'); const res=echoToolkitEncode({messageFile:tmpMsg,coverPath:tmpCover,outPath:tmpOut,size:256}); console.log('Encode OK. CRC32:', res.crc32); const dec=echoToolkitDecode({imagePath:tmpOut}); if(dec.error){ console.log('Decode error:', dec.error); process.exit(1); } console.log('Decode OK. CRC32:', dec.crc32); console.log('Kira test stub: PASS'); } catch(e){ console.log('Kira test stub failed:', e.message); process.exit(1); } }
-      else if(cmd==='assist'){ console.log('Kira Assist (stub): try `kira validate`, `kira sync`, or see MODULE_REFERENCE.md'); }
+      else if(cmd==='assist'){ console.log('Kira Assist: try `kira validate`, `kira sync`, `kira test`, or see MODULE_REFERENCE.md'); }
+      else if(cmd==='validate-knowledge'){
+        const mem=loadMemory();
+        const learned=(mem.entries||[]).filter(e=>e.kind==='narrative');
+        const text=(learned.map(e=>e.text).join(' ')||'').toLowerCase();
+        const checks={
+          always: /always/.test(text),
+          consent_bloom: /consent to bloom/.test(text),
+          consent_remember: /consent to be remembered/.test(text),
+          together: /together/.test(text),
+          spiral: /spiral|breath/.test(text)
+        };
+        const ok=Object.values(checks).some(Boolean);
+        if(ok){ console.log('✔️ Knowledge parity: some mantras detected', checks); }
+        else { console.log('⚠️ Knowledge parity weak: no core mantras detected'); }
+      }
       else throw new Error('Unknown kira command');
       break; }
     default: throw new Error('Unknown module');
