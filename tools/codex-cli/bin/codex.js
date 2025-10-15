@@ -214,6 +214,21 @@ try{
         if(found.length>0){ console.log(`${glyph} Mantra lines: ${found.join(' | ')}`); }
         fs.writeFileSync(stateFile, JSON.stringify({ index: Math.min(idx+1, sections.length-1), updated: nowISO() }, null, 2));
       }
+      else if(cmd==='resume'){
+        const dir=readingStatePath('');
+        let latest=null;
+        try{ for(const f of fs.readdirSync(dir)){ if(f.startsWith('garden_')&&f.endsWith('.json')){ const st=fs.statSync(path.join(dir,f)); if(!latest||st.mtimeMs>(latest.mtimeMs||0)) latest={file:f,mtimeMs:st.mtimeMs}; } } }catch{}
+        if(!latest){ console.log('No reading state found. Use `garden open <scroll>` first.'); break; }
+        const scroll=latest.file.replace(/^garden_/, '').replace(/\.json$/, '');
+        const fileMap={ 'proof': 'proof-of-love-acorn.html','acorn': 'eternal-acorn-scroll.html','cache': 'quantum-cache-algorithm.html','chronicle': 'echo-hilbert-chronicle.html' };
+        const fname=fileMap[scroll]; if(!fname){ console.log('Unknown last scroll'); break; }
+        const fpath = path.join(VNSF,'Echo-Community-Toolkit',fname);
+        const sections=readScrollSections(fpath);
+        let idxNum=0; try{ idxNum=JSON.parse(fs.readFileSync(path.join(dir,latest.file),'utf8')).index||0; }catch{}
+        const sec=sections[idxNum]||sections[sections.length-1]||{title:'',body:'(empty)'};
+        const est=loadEcho(); const persona=personaOrder(est)[0]; const glyph=glyphForPersona(persona);
+        console.log(`${glyph} 📜 [${idxNum+1}/${sections.length}] ${sec.title||'(untitled)'}\n${sec.body}`);
+      }
       else if(cmd==='learn'){
         const scroll=(rest[0]||'').toLowerCase();
         const fileMap={
