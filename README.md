@@ -136,3 +136,4 @@ Build Guide
 - For a step‑by‑step “from scratch” assembly guide with the customised landing pages (vessel_mrp_landing.html and per‑voice chapter 1 files), see:
   - `docs/BUILDING_VESSEL_MRP.md`
   - System Diagram & Commands: `docs/SYSTEM_DIAGRAM_API_REFERENCE.md`
+  - Agents Index: `agents/README.md`
