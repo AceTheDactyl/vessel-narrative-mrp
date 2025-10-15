@@ -1,5 +1,7 @@
 ﻿# Limnus Agent (Scaffold)
 
+[← Back to Agents Index](../README.md)
+
 ## Role & Charter
 - Quantum Cache (L1/L2/L3) for memories; hash‑chained ledger; stego I/O
 - Serve as the knowledge/base layer that Kira can learn from

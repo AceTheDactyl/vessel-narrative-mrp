@@ -1,5 +1,7 @@
 ﻿# Garden Agent (Scaffold)
 
+[← Back to Agents Index](../README.md)
+
 ## Role & Charter
 - Orchestrate the ritual cycle (Proof of Love → Eternal Acorn → Quantum Cache → Hilbert Chronicle)
 - Present scroll content; track spiral stage and log completions
