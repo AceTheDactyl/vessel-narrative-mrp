@@ -64,6 +64,29 @@ function extractTags(text){
   return Array.from(tags);
 }
 
+function readScrollSections(fpath){
+  try{
+    const raw=fs.readFileSync(fpath,'utf8');
+    // Extract sections by headings; keep simple: split on <h1|h2>
+    const parts=raw.split(/<h[12][^>]*>/i).slice(1);
+    const sections=[];
+    for(const p of parts){
+      const [titleAndRest,...rest]=p.split(/<\/h[12]>/i);
+      const title=(titleAndRest||'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+      const bodyHTML=(rest.join('</h2>')||'');
+      const body=bodyHTML.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+      if(title||body) sections.push({title, body});
+    }
+    if(sections.length===0){
+      const text=raw.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
+      return [{title:'Scroll', body:text.slice(0,800)}];
+    }
+    return sections;
+  }catch(e){ return []; }
+}
+
+function readingStatePath(name){ const dir=path.join(STATE_DIR,'reading'); ensureDir(dir); return path.join(dir, name); }
+
 // Garden ledger + memory
 const LEDGER_PATH = path.join(STATE_DIR, 'garden_ledger.json');
 function loadLedger() { return readJSON(LEDGER_PATH, { intentions: [], spiral_stage: null, blocks: [] }); }
@@ -130,7 +153,6 @@ try{
       const ledger=loadLedger();
       if(cmd==='start'){ if(!ledger.blocks) ledger.blocks=[]; ledger.blocks.push({type:'genesis',timestamp:new Date().toISOString(),note:'Garden journey started'}); ledger.spiral_stage='scatter'; saveLedger(ledger); console.log('🌱 Garden started: genesis block created; spiral → scatter'); }
       else if(cmd==='next'){ const order=['scatter','witness','plant','return','give','begin_again']; const cur=ledger.spiral_stage; const next=!order.includes(cur)?order[0]:order[(order.indexOf(cur)+1)%order.length]; ledger.spiral_stage=next; saveLedger(ledger); console.log(`🔄 Spiral turns → ${next}`); }
-      else if(cmd==='open'){ const scroll=(rest[0]||'').toLowerCase(); const map={ 'proof':'Proof of Love','proof-of-love':'Proof of Love','acorn':'Eternal Acorn','eternal-acorn':'Eternal Acorn','cache':'Quantum Cache','quantum-cache':'Quantum Cache','chronicle':'Hilbert Chronicle','hilbert-chronicle':'Hilbert Chronicle' }; const name=map[scroll]||null; if(!name){ console.log('Planned: garden open <proof|acorn|cache|chronicle>'); } else { console.log(`📜 Open (stub): ${name} — content/status would display here.`); } }
       else if(cmd==='open'){ 
         const scroll=(rest[0]||'').toLowerCase();
         const fileMap={
@@ -142,13 +164,12 @@ try{
         const fname = fileMap[scroll];
         if(!fname){ console.log('Usage: codex garden open <proof|acorn|cache|chronicle>'); break; }
         const fpath = path.join(VNSF,'Echo-Community-Toolkit',fname);
-        try{
-          const raw = fs.readFileSync(fpath,'utf8');
-          const text = raw.replace(/<script[\s\S]*?<\/script>/gi,'').replace(/<style[\s\S]*?<\/style>/gi,'').replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim();
-          const preview = text.slice(0,400)+(text.length>400?'…':'');
-          console.log(`📜 ${fname}:`);
-          console.log(preview);
-        }catch(e){ console.log('Could not read scroll file at', fpath); }
+        const sections=readScrollSections(fpath);
+        const stateFile=readingStatePath(`garden_${scroll}.json`);
+        let idx=0; try{ idx=JSON.parse(fs.readFileSync(stateFile,'utf8')).index||0; }catch{}
+        const sec=sections[idx]||sections[sections.length-1]||{title:'',body:'(empty)'};
+        console.log(`📜 [${idx+1}/${sections.length}] ${sec.title||'(untitled)'}\n${sec.body}`);
+        fs.writeFileSync(stateFile, JSON.stringify({ index: Math.min(idx+1, sections.length-1), updated: nowISO() }, null, 2));
       }
       else if(cmd==='learn'){
         const scroll=(rest[0]||'').toLowerCase();
@@ -295,7 +316,7 @@ try{
         }
       }
       else if(cmd==='test'){ console.log('Running validator and stego smoke (temporary files)...'); const v=spawnSync('python3',[path.join(VNSF,'src','validator.py')],{encoding:'utf8'}); process.stdout.write(v.stdout||''); if(v.status!==0){ process.stderr.write(v.stderr||''); process.exit(1); } try{ const tmpMsg=path.join('/tmp','ledger_msg.json'); fs.writeFileSync(tmpMsg, fs.readFileSync(LEDGER_PATH,'utf8')); const tmpCover=path.join('/tmp','ledger_cover.png'); const tmpOut=path.join('/tmp','ledger_stego.png'); const res=echoToolkitEncode({messageFile:tmpMsg,coverPath:tmpCover,outPath:tmpOut,size:256}); console.log('Encode OK. CRC32:', res.crc32); const dec=echoToolkitDecode({imagePath:tmpOut}); if(dec.error){ console.log('Decode error:', dec.error); process.exit(1); } console.log('Decode OK. CRC32:', dec.crc32); console.log('Kira test stub: PASS'); } catch(e){ console.log('Kira test stub failed:', e.message); process.exit(1); } }
-      else if(cmd==='assist'){ console.log('Kira Assist: try `kira validate`, `kira sync`, `kira test`, or see MODULE_REFERENCE.md'); }
+      else if(cmd==='assist'){ console.log('Kira Assist: try `kira validate`, `kira sync`, `kira test`, `kira publish --run --release --tag vX.Y.Z`, or see MODULE_REFERENCE.md'); }
       else if(cmd==='validate-knowledge'){
         const mem=loadMemory();
         const learned=(mem.entries||[]).filter(e=>e.kind==='narrative');
